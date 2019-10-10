@@ -33,18 +33,22 @@ module Desktop
     class Avail < Command
       def run
         if $stdout.tty?
-          word_wrap = method(:word_wrap)
-          Table.emit do |t|
-            headers 'Name', 'Summary', 'State'
-            Type.each do |t|
-              row Paint[t.name, :cyan],
-                  word_wrap.call(
-                    "#{Paint[t.summary, :green]}".tap do |s|
-                      s << "\n > #{Paint[t.url, :blue, :bright, :underline]}\n " if t.url
-                    end,
-                    line_width: TTY::Screen.width - 30
-                  ),
-                  t.verified? ? 'Verified' : 'Unverified'
+          if Type.all.empty?
+            puts "No desktop types found."
+          else
+            word_wrap = method(:word_wrap)
+            Table.emit do |t|
+              headers 'Name', 'Summary', 'State'
+              Type.each do |t|
+                row Paint[t.name, :cyan],
+                    word_wrap.call(
+                      "#{Paint[t.summary, :green]}".tap do |s|
+                        s << "\n > #{Paint[t.url, :blue, :bright, :underline]}\n " if t.url
+                      end,
+                      line_width: TTY::Screen.width - 30
+                    ),
+                    t.verified? ? 'Verified' : 'Unverified'
+              end
             end
           end
         else

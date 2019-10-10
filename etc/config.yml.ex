@@ -1,4 +1,7 @@
 ---
+# Directories containing desktop type definitions
+#type_paths:
+#  - etc/types
 # Global setting for default desktop type
 #desktop_type: gnome
 # Global setting for default geometry

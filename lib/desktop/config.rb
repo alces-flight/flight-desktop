@@ -86,10 +86,6 @@ module Desktop
         @root ||= File.expand_path(File.join(__dir__, '..', '..'))
       end
 
-      def types_path
-        @types_path ||= File.join(root, 'etc', 'types')
-      end
-
       def session_path
         @session_path ||= File.join(xdg_cache.home, DESKTOP_DIR_SUFFIX, 'sessions')
       end
@@ -120,6 +116,16 @@ module Desktop
       def functional?
         File.executable?(vnc_passwd_program) &&
           File.executable?(vnc_server_program)
+      end
+
+      def type_paths
+        @type_paths ||=
+          data.fetch(
+            :type_paths,
+            default: [
+              'etc/types'
+            ]
+          ).map {|p| File.expand_path(p, Config.root)}
       end
 
       def access_hosts
@@ -172,7 +178,7 @@ module Desktop
               :desktop_type
             )
           )
-        (type_name && Type[type_name]) || Type.default
+        (type_name && Type[type_name] rescue nil) || Type.default
       end
 
       def bg_image

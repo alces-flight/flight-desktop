@@ -52,12 +52,14 @@ module Desktop
         @types ||=
           begin
             {}.tap do |h|
-              Dir[File.join(Config.types_path,'*')].sort.each do |d|
-                begin
-                  md = YAML.load_file(File.join(d,'metadata.yml'))
-                  h[md[:name].to_sym] = Type.new(md, d)
-                rescue
-                  nil
+              Config.type_paths.each do |p|
+                Dir[File.join(p,'*')].sort.each do |d|
+                  begin
+                    md = YAML.load_file(File.join(d,'metadata.yml'))
+                    h[md[:name].to_sym] = Type.new(md, d)
+                  rescue
+                    nil
+                  end
                 end
               end
             end
@@ -65,7 +67,7 @@ module Desktop
       end
 
       def default
-        all.values.find { |t| t.default == true } || all.values.first
+        all.values.find { |t| t.default == true } || all.values.first || Type.new({name: 'default'}, '/tmp')
       end
 
       def set_default(type_name, global: false)
