@@ -1,0 +1,66 @@
+#!/bin/bash
+# =============================================================================
+# Copyright (C) 2019-present Alces Flight Ltd.
+#
+# This file is part of Flight Desktop.
+#
+# This program and the accompanying materials are made available under
+# the terms of the Eclipse Public License 2.0 which is available at
+# <https://www.eclipse.org/legal/epl-2.0>, or alternative license
+# terms made available by Alces Flight Ltd - please direct inquiries
+# about licensing to licensing@alces-flight.com.
+#
+# Flight Desktop is distributed in the hope that it will be useful, but
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR
+# IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR CONDITIONS
+# OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A
+# PARTICULAR PURPOSE. See the Eclipse Public License 2.0 for more
+# details.
+#
+# You should have received a copy of the Eclipse Public License 2.0
+# along with Flight Desktop. If not, see:
+#
+#  https://opensource.org/licenses/EPL-2.0
+#
+# For more information on Flight Desktop, please visit:
+# https://github.com/alces-flight/flight-desktop
+# ==============================================================================
+network_is_ec2() {
+  [ -f /sys/hypervisor/uuid ] &&
+    [ "$(head -c3 /sys/hypervisor/uuid)" == "ec2" ] ||
+      [ -f /sys/class/dmi/id/board_vendor ] &&
+        [ "$(cat /sys/class/dmi/id/board_vendor)" == "Amazon Corporate LLC" ] ||
+          [ -f /sys/class/dmi/id/board_vendor ] &&
+            [ "$(cat /sys/class/dmi/id/board_vendor)" == "Amazon EC2" ]
+}
+
+network_is_azure() {
+  [ -f /sys/class/dmi/id/chassis_vendor ] &&
+    [ "$(cat /sys/class/dmi/id/chassis_vendor)" == "Microsoft Corporation" ]
+}
+
+network_get_route_iface() {
+    local target_ip
+    target_ip="$1"
+
+    ip -o route get "${target_ip}" \
+        | head -n 1 \
+        | sed 's/.*dev \(\S*\).*/\1/g'
+}
+
+network_get_iface_address() {
+    local target_iface
+    target_iface="$1"
+
+    ip -o -4 address show dev ${target_iface} \
+        | head -n 1 \
+        | sed 's/.*inet \([^\/ ]\+\).*/\1/g'
+}
+
+if network_is_ec2; then
+  curl http://169.254.169.254/latest/meta-data/public-ipv4
+elif network_is_azure; then
+  curl -H Metadata:true "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/publicIpAddress?api-version=2017-08-01&format=text"
+else
+  network_get_iface_address $(network_get_route_iface 8.8.8.8)
+fi
