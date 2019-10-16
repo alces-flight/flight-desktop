@@ -115,7 +115,7 @@ EOF
         # 1. determine if this machine has a public IP
         # 2. determine if the VNC port is reachable
         !NetworkUtils.private_ip?(session.ip) &&
-          NetworkUtils.reachable?(session.ip, session.port)
+          NetworkUtils.reachable?(session.port)
       end
 
       def on_access_host?(session)
