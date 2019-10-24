@@ -168,6 +168,7 @@ module Desktop
         install_session_script
         start_vnc_server(geometry: geometry) &&
           start_websocket_server &&
+          start_grabber &&
           start_cleaner &&
           save
       end
@@ -205,7 +206,7 @@ module Desktop
         exec(
           {
             'SESSION_VNC_PID' => File.read(pidfile).chomp,
-            'SESSION_PIDS' => "#{@websocket_pid}",
+            'SESSION_PIDS' => "#{@websocket_pid} #{@grabber_pid}",
             'SESSION_DIR' => dir,
           },
           File.join(Config.root,'libexec','cleaner'),
@@ -213,6 +214,29 @@ module Desktop
         )
       }
       Process.detach(pid)
+      true
+    end
+
+    def start_grabber
+      if File.executable?('/usr/bin/xwd') &&
+         File.executable?('/usr/bin/xwdtopnm') &&
+         File.executable?('/usr/bin/pnmtopng')
+        pid = fork {
+          log_file = File.join(
+            dir,
+            "grabber.log"
+          )
+          exec(
+            {},
+            File.join(Config.root,'libexec','grabber'),
+            display,
+            dir,
+            [:out, :err] => [log_file ,'w']
+          )
+        }
+        Process.detach(pid)
+        @grabber_pid = pid
+      end
       true
     end
 

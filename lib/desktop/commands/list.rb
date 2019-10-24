@@ -46,7 +46,23 @@ module Desktop
           end
         else
           Session.each do |s|
-            puts session_to_array(s).join("\t")
+            a =
+              if s.state == :broken
+                [s.uuid].tap {|b| b[7] = 'Broken' }
+              else
+                [
+                  s.uuid,
+                  s.type.name,
+                  s.host_name,
+                  s.ip,
+                  s.display,
+                  s.port,
+                  s.websocket_port,
+                  s.password,
+                  s.local? ? (s.active? ? 'Active' : 'Exited') : 'Remote'
+                ]
+              end
+            puts a.join("\t")
           end
         end
       end
