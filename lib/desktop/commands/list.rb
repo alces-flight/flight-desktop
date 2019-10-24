@@ -48,7 +48,7 @@ module Desktop
           Session.each do |s|
             a =
               if s.state == :broken
-                [s.uuid].tap {|b| b[7] = 'Broken' }
+                [s.uuid].tap {|b| b[8] = 'Broken' }
               else
                 [
                   s.uuid,
