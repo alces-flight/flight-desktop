@@ -94,8 +94,8 @@ if ! rpm -qa firefox | grep -q firefox; then
 fi
 
 if rpm -qa gnome-packagekit; then
-  desktop_stage "Removing package: gnome-packagekit"
-  yum -e0 -y remove gnome-packagekit
+  desktop_stage "Removing package: PackageKit"
+  yum -e0 -y remove PackageKit
 fi
 
 desktop_stage "Prequisites met"
