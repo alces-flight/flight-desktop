@@ -28,6 +28,8 @@
 display=$1
 dir=$2
 
+trap 'kill $(jobs -p)' EXIT
+
 sleep 5
 while true; do
   if [ -x /usr/bin/xwd -a -x /usr/bin/xwdtopnm -a -x /usr/bin/pnmtopng ]; then

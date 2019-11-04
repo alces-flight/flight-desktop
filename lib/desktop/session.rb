@@ -65,7 +65,9 @@ module Desktop
               Dir[File.join(Config.session_path,'*')].sort.each do |d|
                 begin
                   uuid = File.basename(d)
-                  h[uuid] = Session.new(uuid: uuid)
+                  unless Dir[File.join(d,'*')].empty?
+                    h[uuid] = Session.new(uuid: uuid)
+                  end
                 rescue
                   nil
                 end
@@ -140,7 +142,7 @@ module Desktop
     end
 
     def kill
-      Bundler.with_clean_env do
+      CommandUtils.with_clean_env do
         IO.popen(
           [
             Config.vnc_server_program,
@@ -163,7 +165,7 @@ module Desktop
     end
 
     def start(geometry: Config.geometry)
-      Bundler.with_clean_env do
+      CommandUtils.with_clean_env do
         create_password_file
         install_session_script
         start_vnc_server(geometry: geometry) &&
@@ -210,7 +212,8 @@ module Desktop
             'SESSION_DIR' => dir,
           },
           File.join(Config.root,'libexec','cleaner'),
-          [:out, :err] => [log_file ,'w']
+          [:out, :err] => ['/dev/null','w'],
+          :chdir => '/'
         )
       }
       Process.detach(pid)
