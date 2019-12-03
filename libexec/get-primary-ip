@@ -26,12 +26,16 @@
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
 network_is_ec2() {
-  [ -f /sys/hypervisor/uuid ] &&
-    [ "$(head -c3 /sys/hypervisor/uuid)" == "ec2" ] ||
-      [ -f /sys/class/dmi/id/board_vendor ] &&
-        [ "$(cat /sys/class/dmi/id/board_vendor)" == "Amazon Corporate LLC" ] ||
-          [ -f /sys/class/dmi/id/board_vendor ] &&
-            [ "$(cat /sys/class/dmi/id/board_vendor)" == "Amazon EC2" ]
+  (
+    [ -f /sys/hypervisor/uuid ] &&
+      [ "$(head -c3 /sys/hypervisor/uuid)" == "ec2" ]
+  ) || (
+    [ -f /sys/class/dmi/id/board_vendor ] &&
+      [ "$(cat /sys/class/dmi/id/board_vendor)" == "Amazon Corporate LLC" ]
+  ) || (
+    [ -f /sys/class/dmi/id/board_vendor ] &&
+      [ "$(cat /sys/class/dmi/id/board_vendor)" == "Amazon EC2" ]
+  )
 }
 
 network_is_azure() {
