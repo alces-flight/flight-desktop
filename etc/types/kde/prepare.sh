@@ -25,6 +25,8 @@
 # For more information on Flight Desktop, please visit:
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
+set -e
+
 contains() {
   local e match="$1"
   shift
@@ -41,27 +43,27 @@ IFS=$'\n' groups=(
 
 if ! contains 'X Window System' "${groups[@]}"; then
   desktop_stage "Installing package group: X Window System"
-  yum -e0 -y groupinstall 'X Window System'
+  yum -y groupinstall 'X Window System'
 fi
 
 if ! contains 'Fonts' "${groups[@]}"; then
   desktop_stage "Installing package group: Fonts"
-  yum -e0 -y groupinstall 'Fonts'
+  yum -y groupinstall 'Fonts'
 fi
 
 if ! contains 'KDE' "${groups[@]}"; then
   desktop_stage "Installing package group: KDE"
-  yum -e0 -y groupinstall 'KDE'
+  yum -y groupinstall 'KDE'
 fi
 
 if ! rpm -qa evince | grep -q evince; then
   desktop_stage "Installing package: evince"
-  yum -e0 -y install evince
+  yum -y install evince
 fi
 
 if ! rpm -qa firefox | grep -q firefox; then
   desktop_stage "Installing package: firefox"
-  yum -e0 -y install firefox
+  yum -y install firefox
 fi
 
 desktop_stage "Prequisites met"

@@ -25,6 +25,8 @@
 # For more information on Flight Desktop, please visit:
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
+set -e
+
 if ! yum --enablerepo=google-chrome repolist | grep -q ^google-chrome; then
   desktop_stage "Enabling repository: Google Chrome"
   cat <<\EOF > /etc/yum.repos.d/google-chrome.repo
@@ -40,7 +42,7 @@ fi
 
 if ! rpm -qa google-chrome-stable | grep -q google-chrome-stable; then
   desktop_stage "Installing package: google-chrome-stable"
-  yum -e0 -y install google-chrome-stable
+  yum -y install google-chrome-stable
 fi
 
 desktop_stage "Prequisites met"

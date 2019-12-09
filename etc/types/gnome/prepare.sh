@@ -25,6 +25,8 @@
 # For more information on Flight Desktop, please visit:
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
+set -e
+
 set_policies() {
   local group=$1
   # disable authentication prompts for admin users
@@ -70,32 +72,32 @@ IFS=$'\n' groups=(
 
 if ! contains 'X Window System' "${groups[@]}"; then
   desktop_stage "Installing package group: X Window System"
-  yum -e0 -y groupinstall 'X Window System'
+  yum -y groupinstall 'X Window System'
 fi
 
 if ! contains 'Fonts' "${groups[@]}"; then
   desktop_stage "Installing package group: Fonts"
-  yum -e0 -y groupinstall 'Fonts'
+  yum -y groupinstall 'Fonts'
 fi
 
 if ! contains 'GNOME' "${groups[@]}"; then
   desktop_stage "Installing package group: GNOME"
-  yum -e0 -y groupinstall 'GNOME'
+  yum -y groupinstall 'GNOME'
 fi
 
 if ! rpm -qa evince | grep -q evince; then
   desktop_stage "Installing package: evince"
-  yum -e0 -y install evince
+  yum -y install evince
 fi
 
 if ! rpm -qa firefox | grep -q firefox; then
   desktop_stage "Installing package: firefox"
-  yum -e0 -y install firefox
+  yum -y install firefox
 fi
 
 if rpm -qa gnome-packagekit; then
   desktop_stage "Removing package: PackageKit"
-  yum -e0 -y remove PackageKit
+  yum -y remove PackageKit
 fi
 
 desktop_stage "Prequisites met"
