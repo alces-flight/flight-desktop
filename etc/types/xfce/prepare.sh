@@ -25,6 +25,8 @@
 # For more information on Flight Desktop, please visit:
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
+set -e
+
 contains() {
   local e match="$1"
   shift
@@ -41,23 +43,23 @@ IFS=$'\n' groups=(
 
 if ! yum --enablerepo=epel* --disablerepo=epel-testing* repolist | grep -q ^epel; then
   desktop_stage "Enabling repository: EPEL"
-  yum -e0 -y install epel-release
+  yum -y install epel-release
   yum makecache
 fi
 
 if ! contains 'Xfce' "${groups[@]}"; then
   desktop_stage "Installing package group: Xfce"
-  yum --enablerepo=epel* --disablerepo=epel-testing* -e0 -y groupinstall 'Xfce'
+  yum --enablerepo=epel* --disablerepo=epel-testing* -y groupinstall 'Xfce'
 fi
 
 if ! rpm -qa evince | grep -q evince; then
   desktop_stage "Installing package: evince"
-  yum -e0 -y install evince
+  yum -y install evince
 fi
 
 if ! rpm -qa firefox | grep -q firefox; then
   desktop_stage "Installing package: firefox"
-  yum -e0 -y install firefox
+  yum -y install firefox
 fi
 
 desktop_stage "Prequisites met"

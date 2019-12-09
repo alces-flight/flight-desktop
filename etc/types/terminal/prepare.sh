@@ -25,14 +25,16 @@
 # For more information on Flight Desktop, please visit:
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
+set -e
+
 if ! rpm -qa xorg-x11-server-utils | grep -q xorg-x11-server-utils; then
   desktop_stage "Installing package: xorg-x11-server-utils"
-  yum -e0 -y install xorg-x11-server-utils
+  yum -y install xorg-x11-server-utils
 fi
 
 if ! rpm -qa xterm | grep -q xterm; then
   desktop_stage "Installing package: xterm"
-  yum -e0 -y install xterm
+  yum -y install xterm
 fi
 
 desktop_stage "Prequisites met"

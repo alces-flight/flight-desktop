@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env python
 # =============================================================================
 # Copyright (C) 2019-present Alces Flight Ltd.
 #
@@ -25,28 +25,23 @@
 # For more information on Flight Desktop, please visit:
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
-# 'Xterm*vt100.pointerMode: 0' is to ensure that the pointer does not
-# disappear when a user types into the xterm.  In this situation, some
-# VNC clients experience a 'freeze' due to a bug with handling
-# invisible mouse pointers (e.g. OSX Screen Sharing).
-echo 'XTerm*vt100.pointerMode: 0' | xrdb -merge
-vncconfig -nowin &
+import sys
+import dbus
+from PyKDE4 import kdecore
 
-startkde &
-kdepid=$!
-bg_image="${flight_DESKTOP_bg_image:-${flight_DESKTOP_root}/etc/assets/backgrounds/default.jpg}"
-if [ -f "${bg_image}" ]; then
-  while [ ! -f ~/.kde/share/config/plasma-desktop-appletsrc ]; do
-    sleep 1
-  done
-  echo "Sleeping [1/3]..."
-  sleep 5
-  python "${flight_DESKTOP_root}"/etc/types/kde/set_kde_wallpaper.py "$bg_image" "$HOME"
-  echo "Sleeping [2/3]..."
-  sleep 2
-  kquitapp plasma-desktop
-  echo "Sleeping [3/3]..."
-  sleep 2
-  kstart plasma-desktop
-fi
-wait $kdepid
+wallpaper_path = sys.argv[1]
+konf_path = '%s/.kde/share/config/plasma-desktop-appletsrc' % (sys.argv[2])
+print('Patching %s' % konf_path)
+activity_manager = dbus.SessionBus().get_object(
+    'org.kde.ActivityManager', '/ActivityManager/Activities')
+current_activity_id = dbus.Interface(
+    activity_manager, 'org.kde.ActivityManager.Activities').CurrentActivity()
+konf = kdecore.KConfig(konf_path, kdecore.KConfig.SimpleConfig)
+containments = konf.group('Containments')
+for group_name in containments.groupList():
+    group = containments.group(group_name)
+    # http://api.kde.org/pykde-4.7-api/kdecore/KConfigGroup.html
+    if (group.readEntry('activity') == 'Desktop' and
+            group.readEntry('activityId') == current_activity_id):
+        group.group('Wallpaper').group('image').writeEntry('wallpaper', wallpaper_path)
+        print wallpaper_path

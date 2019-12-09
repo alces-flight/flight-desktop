@@ -56,7 +56,8 @@ module Desktop
                 Dir[File.join(p,'*')].sort.each do |d|
                   begin
                     md = YAML.load_file(File.join(d,'metadata.yml'))
-                    h[md[:name].to_sym] = Type.new(md, d)
+                    t = Type.new(md, d)
+                    h[md[:name].to_sym] = t if t.supports_host_arch?
                   rescue
                     nil
                   end
@@ -87,6 +88,7 @@ module Desktop
     attr_reader :summary
     attr_reader :url
     attr_reader :default
+    attr_reader :arch
 
     def initialize(md, dir)
       @name = md[:name]
@@ -94,10 +96,19 @@ module Desktop
       @url = md[:url]
       @default = md[:default]
       @dir = dir
+      @arch = md[:arch] || []
     end
 
     def session_script
       @session_script ||= File.join(@dir, 'session.sh')
+    end
+
+    def supports_host_arch?
+      if @arch.empty?
+        true
+      else
+        @arch.include?(RbConfig::CONFIG['host_cpu'])
+      end
     end
 
     def verified?
