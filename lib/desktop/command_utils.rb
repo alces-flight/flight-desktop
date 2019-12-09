@@ -156,32 +156,34 @@ EOF
 Once the ssh connection has been established, depending on your
 client, you can connect to the session using one of:
 
-  #{Paint["vnc://#{ENV['USER']}:#{session.password}@localhost:5901",:green]}
-  #{Paint["localhost:5901",:green]}
-  #{Paint["localhost:1",:green]}
+  #{Paint["vnc://#{ENV['USER']}:#{session.password}@localhost:#{session.port}",:green]}
+  #{Paint["localhost:#{session.port}",:green]}
+  #{Paint["localhost:#{session.display}",:green]}
 
 If, when connecting, you receive a warning as follows, try again with
-a different port number, e.g. 5902, 5903 etc.:
+a different port number, e.g. #{session.port + 1}, #{session.port + 2} etc.:
 
-  #{Paint["channel_setup_fwd_listener_tcpip: cannot listen to port: 5901", :bold, '#888888']}
+  #{Paint["channel_setup_fwd_listener_tcpip: cannot listen to port: #{session.port}", :bold, '#888888']}
 
 #{password_prompt(session)}
 EOF
         if public?(session)
-          <<EOF
-This desktop session is accessible from the public internet. However,
-please be aware that desktop sessions accessed over the public
-internet are not secure and steps should be taken to secure the link.
+          <<EOF.chomp
+This desktop session is accessible from the public internet.
+#{vnc_details(Config.access_ip, session, :yellow)}
+However, please be aware that desktop sessions accessed over the
+public internet are not secure and steps should be taken to secure the
+link.
 
 #{Paint["We highly recommend that you access your desktop session using 'ssh'
 port forwarding",:underline]}:
 
-  #{Paint["ssh -L 5901:localhost:#{session.port} #{ENV['USER']}@#{session.ip}",:green]}
+  #{Paint["ssh -L #{session.port}:localhost:#{session.port} #{ENV['USER']}@#{session.ip}",:green]}
 
 #{general}
 EOF
         elsif on_access_host?(session)
-          <<EOF
+          <<EOF.chomp
 This desktop session is not accessible from the public internet, but
 may be directly accessible from within your local network or over a
 virtual private network (VPN).
@@ -190,18 +192,18 @@ virtual private network (VPN).
 However, #{Paint["we highly recommend that you access your desktop session using
 'ssh' port forwarding",:underline]}:
 
-  #{Paint["ssh -L 5901:#{session.ip}:#{session.port} #{ENV['USER']}@#{Config.access_host}",:green]}
+  #{Paint["ssh -L #{session.port}:#{session.ip}:#{session.port} #{ENV['USER']}@#{Config.access_host}",:green]}
 
 #{general}
 EOF
         else
-          <<EOF
+          <<EOF.chomp
 This desktop session is not directly accessible from outside of your
 cluster as it is running on a machine that only provides internal
 cluster access.  #{Paint["In order to access your desktop session you will need
 to perform port forwarding using 'ssh'",:underline]}:
 
-  #{Paint["ssh -L 5901:#{session.ip}:#{session.port} #{ENV['USER']}@#{Config.access_host}",:green]}
+  #{Paint["ssh -L #{session.port}:#{session.ip}:#{session.port} #{ENV['USER']}@#{Config.access_host}",:green]}
 
 #{general}
 EOF
