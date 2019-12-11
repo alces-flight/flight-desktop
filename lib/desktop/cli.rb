@@ -37,7 +37,7 @@ module Desktop
     extend Commander::Delegates
     program :application, "Flight Desktop"
     program :name, PROGRAM_NAME
-    program :version, "Release 2019.1 (v#{Desktop::VERSION})"
+    program :version, "v#{Desktop::VERSION}"
     program :description, 'Manage interactive GUI desktop sessions.'
     program :help_paging, false
     default_command :help
