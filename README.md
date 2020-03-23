@@ -62,7 +62,7 @@ Once verified, a user can start a desktop session with the `start` command.
 Access desktop sessions using a VNC client as instructed by the output
 from the `start` and `show` commands.
 
-See the `help` command for further details and information about other commands.
+See the `help` command for further details and information about other commands. Further information and examples of the `env` command are available in [the OpenFlight documentation](https://use.openflighthpc.org/en/latest/working-with-user-suite/flight-desktop.html).
 
 # Contributing
 
