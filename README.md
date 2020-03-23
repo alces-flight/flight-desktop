@@ -11,9 +11,19 @@ protocol.
 
 ## Installation
 
-### From source
+### Installing with OpenFlight `yum` Repos
 
-Flight Desktop requires a recent version of Ruby and `bundler`.
+The installation of Flight Desktop and the Flight User Suite is documented in [the OpenFlight Documentation](https://use.openflighthpc.org/en/latest/installing-user-suite/install.html#installing-flight-user-suite).
+
+### Manual Installation
+
+#### Prerequisites
+
+Flight Desktop requires a recent version of Ruby (2.5+) and `bundler`.
+
+Also, a VNC password program is required at `/usr/bin/vncpasswd`. For example, this can be provided by `tigervnc-server`.
+
+#### Steps
 
 The following will install from source using `git`:
 
@@ -24,60 +34,6 @@ bundle install --path=vendor
 ```
 
 Use the script located at `bin/desktop` to execute the tool.
-
-### Installing with Flight Runway
-
-Flight Runway provides a Ruby environment and command-line helpers for
-running openflightHPC tools.  Flight Desktop integrates with Flight
-Runway to provide an easy way for multiple users of an
-HPC environment to use the tool.
-
-To install Flight Runway, see the [Flight Runway installation
-docs](https://github.com/openflighthpc/flight-runway#installation).
-
-These instructions assume that `flight-runway` has been installed from
-the openflightHPC yum repository and that either [system-wide
-integration](https://github.com/openflighthpc/flight-runway#system-wide-integration) has been enabled or the
-[`flight-starter`](https://github.com/openflighthpc/flight-starter) tool has been
-installed and the environment activated with the `flight start` command.
-
- * Enable the Alces Flight RPM repository:
-
-    ```
-    yum install https://repo.openflighthpc.org/openflight/centos/7/x86_64/openflighthpc-release-2-1.noarch.rpm
-    ```
-
- * Rebuild your `yum` cache:
-
-    ```
-    yum makecache
-    ```
-    
- * Install the `flight-desktop` RPM:
-
-    ```
-    [root@myhost ~]# yum install flight-desktop
-    ```
-
-Flight Desktop is now available via the `flight` tool:
-
-```
-[root@myhost ~]# flight desktop
-  NAME:
-
-    flight desktop
-
-  DESCRIPTION:
-
-    Manage interactive GUI desktop sessions.
-
-  COMMANDS:
-
-    avail  Show available desktop types
-    clean  Clean up one or more exited desktop sessions
-    help   Display global or [command] help documentation
-    <snip>
-```
 
 ## Configuration
 
