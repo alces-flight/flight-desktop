@@ -106,7 +106,7 @@ module Desktop
         @vnc_server_program ||=
           File.expand_path(
             data.fetch(
-              :vnc_passwd_program,
+              :vnc_server_program,
               default: File.join('libexec','vncserver')
             ),
             Config.root
