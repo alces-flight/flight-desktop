@@ -34,6 +34,16 @@ contains() {
   return 1
 }
 
+if [ -f /etc/redhat-release ] && grep -q 'release 8' /etc/redhat-release; then
+  distro=rhel8
+fi
+
+if ! rpm -qa tigervnc-server-minimal | grep -q tigervnc-server-minimal ||
+   ! rpm -qa xorg-x11-xauth | grep -q xorg-x11-xauth; then
+  desktop_stage "Installing Flight Desktop prerequisites"
+  yum -y install tigervnc-server-minimal xorg-x11-xauth
+fi
+
 IFS=$'\n' groups=(
   $(
     yum grouplist hidden | \
@@ -41,9 +51,28 @@ IFS=$'\n' groups=(
   )
 )
 
-if ! contains 'X Window System' "${groups[@]}"; then
-  desktop_stage "Installing package group: X Window System"
-  yum -y groupinstall 'X Window System'
+if [ "$distro" == "rhel8" ]; then
+  if ! yum --enablerepo=epel --disablerepo=epel-* repolist | grep -q '^*epel'; then
+    desktop_stage "Enabling repository: EPEL"
+    yum -y install epel-release
+    yum makecache
+  fi
+
+  if ! yum repolist | grep -q '^PowerTools'; then
+    desktop_stage "Enabling repository: PowerTools"
+    yum config-manager --set-enabled PowerTools
+    yum makecache
+  fi
+
+  if ! contains 'base-x' "${groups[@]}"; then
+    desktop_stage "Installing package group: base-x"
+    yum -y groupinstall 'base-x'
+  fi
+else
+  if ! contains 'X Window System' "${groups[@]}"; then
+    desktop_stage "Installing package group: X Window System"
+    yum -y groupinstall 'X Window System'
+  fi
 fi
 
 if ! contains 'Fonts' "${groups[@]}"; then
@@ -53,7 +82,11 @@ fi
 
 if ! contains 'KDE' "${groups[@]}"; then
   desktop_stage "Installing package group: KDE"
-  yum -y groupinstall 'KDE'
+  if [ "$distro" == "rhel8" ]; then
+    yum --enablerepo=epel --disablerepo=epel-* -y groupinstall 'KDE'
+  else
+    yum -y groupinstall 'KDE'
+  fi
 fi
 
 if ! rpm -qa evince | grep -q evince; then

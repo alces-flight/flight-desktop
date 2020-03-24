@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# Copyright (C) 2019-present Alces Flight Ltd.
+# Copyright (C) 2020-present Alces Flight Ltd.
 #
 # This file is part of Flight Desktop.
 #
@@ -33,12 +33,17 @@ if ! rpm -qa xorg-x11-xauth | grep -q xorg-x11-xauth; then
   desktop_miss 'Package: xorg-x11-xauth'
 fi
 
-desktop_stage "Repository: Google Chrome"
-if ! yum --enablerepo=google-chrome repolist | grep -q ^google-chrome; then
-  desktop_miss 'Repository: Google Chrome'
+desktop_stage "Package: xorg-x11-server-utils"
+if ! rpm -qa xorg-x11-server-utils | grep -q xorg-x11-server-utils; then
+  desktop_miss 'Package: xorg-x11-server-utils'
 fi
 
-desktop_stage "Package: google-chrome-stable"
-if ! rpm -qa google-chrome-stable | grep -q google-chrome-stable; then
-  desktop_miss 'Package: google-chrome-stable'
+desktop_stage "Source package: prboom"
+if [ ! -x "${flight_ROOT}/opt/prboom/games/prboom" ]; then
+  desktop_miss "Source package: prboom"
+fi
+
+desktop_stage "Asset: doom1.wad"
+if [ ! -f "${flight_ROOT}/opt/prboom/share/games/doom/doom1.wad" ]; then
+  desktop_miss "Asset: doom1.wad"
 fi

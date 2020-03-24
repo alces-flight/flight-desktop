@@ -32,6 +32,18 @@ contains() {
   return 1
 }
 
+if [ -f /etc/redhat-release ] && grep -q 'release 8' /etc/redhat-release; then
+  distro=rhel8
+fi
+
+desktop_stage "Flight Desktop prerequisites"
+if ! rpm -qa tigervnc-server-minimal | grep -q tigervnc-server-minimal; then
+  desktop_miss 'Package: tigervnc-server-minimal'
+fi
+if ! rpm -qa xorg-x11-xauth | grep -q xorg-x11-xauth; then
+  desktop_miss 'Package: xorg-x11-xauth'
+fi
+
 IFS=$'\n' groups=(
   $(
     yum grouplist hidden | \
@@ -40,8 +52,14 @@ IFS=$'\n' groups=(
 )
 
 desktop_stage "Repository: EPEL"
-if ! yum --enablerepo=epel* --disablerepo=epel-testing* repolist | grep -q ^epel; then
-  desktop_miss 'Package repo: EPEL'
+if [ "$distro" == "rhel8" ]; then
+  if ! yum --enablerepo=epel --disablerepo=epel-* repolist | grep -q '^*epel'; then
+    desktop_miss 'Repository: EPEL'
+  fi
+else
+  if ! yum --enablerepo=epel --disablerepo=epel-* repolist | grep -q ^epel; then
+    desktop_miss 'Repository: EPEL'
+  fi
 fi
 
 desktop_stage "Package group: Xfce"

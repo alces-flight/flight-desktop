@@ -27,6 +27,12 @@
 # ==============================================================================
 set -e
 
+if ! rpm -qa tigervnc-server-minimal | grep -q tigervnc-server-minimal ||
+   ! rpm -qa xorg-x11-xauth | grep -q xorg-x11-xauth; then
+  desktop_stage "Installing Flight Desktop prerequisites"
+  yum -y install tigervnc-server-minimal xorg-x11-xauth
+fi
+
 if ! yum --enablerepo=google-chrome repolist | grep -q ^google-chrome; then
   desktop_stage "Enabling repository: Google Chrome"
   cat <<\EOF > /etc/yum.repos.d/google-chrome.repo

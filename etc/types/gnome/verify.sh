@@ -32,6 +32,18 @@ contains() {
   return 1
 }
 
+if [ -f /etc/redhat-release ] && grep -q 'release 8' /etc/redhat-release; then
+  distro=rhel8
+fi
+
+desktop_stage "Flight Desktop prerequisites"
+if ! rpm -qa tigervnc-server-minimal | grep -q tigervnc-server-minimal; then
+  desktop_miss 'Package: tigervnc-server-minimal'
+fi
+if ! rpm -qa xorg-x11-xauth | grep -q xorg-x11-xauth; then
+  desktop_miss 'Package: xorg-x11-xauth'
+fi
+
 IFS=$'\n' groups=(
   $(
     yum grouplist hidden | \
@@ -44,27 +56,34 @@ if ! [ -f /etc/polkit-1/localauthority/10-vendor.d/20-flight-desktop-gnome.pkla 
   desktop_miss 'Configuration: polkit policies'
 fi
 
-desktop_stage "Prerequisite: X Window System"
-if ! contains 'X Window System' "${groups[@]}"; then
-  desktop_miss 'Package group: X Window System'
+if [ "$distro" == "rhel8" ]; then
+  desktop_stage "Package group: base-x"
+  if ! contains 'base-x' "${groups[@]}"; then
+    desktop_miss 'Package group: base-x'
+  fi
+else
+  desktop_stage "Package group: X Window System"
+  if ! contains 'X Window System' "${groups[@]}"; then
+    desktop_miss 'Package group: X Window System'
+  fi
 fi
 
-desktop_stage "Prerequisite: Fonts"
+desktop_stage "Package group: Fonts"
 if ! contains 'Fonts' "${groups[@]}"; then
   desktop_miss 'Package group: Fonts'
 fi
 
-desktop_stage "Prerequisite: GNOME"
+desktop_stage "Package group: GNOME"
 if ! contains 'GNOME' "${groups[@]}"; then
   desktop_miss 'Package group: GNOME'
 fi
 
-desktop_stage "Prerequisite: evince"
+desktop_stage "Package: evince"
 if ! rpm -qa evince | grep -q evince; then
   desktop_miss 'Package: evince'
 fi
 
-desktop_stage "Prerequisite: firefox"
+desktop_stage "Package: firefox"
 if ! rpm -qa firefox | grep -q firefox; then
   desktop_miss 'Package: firefox'
 fi

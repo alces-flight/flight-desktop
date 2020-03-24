@@ -1,6 +1,5 @@
-#!/bin/bash
 # =============================================================================
-# Copyright (C) 2019-present Alces Flight Ltd.
+# Copyright (C) 2020-present Alces Flight Ltd.
 #
 # This file is part of Flight Desktop.
 #
@@ -25,20 +24,18 @@
 # For more information on Flight Desktop, please visit:
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
-desktop_stage "Flight Desktop prerequisites"
-if ! rpm -qa tigervnc-server-minimal | grep -q tigervnc-server-minimal; then
-  desktop_miss 'Package: tigervnc-server-minimal'
-fi
-if ! rpm -qa xorg-x11-xauth | grep -q xorg-x11-xauth; then
-  desktop_miss 'Package: xorg-x11-xauth'
-fi
-
-desktop_stage "Repository: Google Chrome"
-if ! yum --enablerepo=google-chrome repolist | grep -q ^google-chrome; then
-  desktop_miss 'Repository: Google Chrome'
-fi
-
-desktop_stage "Package: google-chrome-stable"
-if ! rpm -qa google-chrome-stable | grep -q google-chrome-stable; then
-  desktop_miss 'Package: google-chrome-stable'
-fi
+# 'Xterm*vt100.pointerMode: 0' is to ensure that the pointer does not
+# disappear when a user types into the xterm.  In this situation, some
+# VNC clients experience a 'freeze' due to a bug with handling
+# invisible mouse pointers (e.g. OSX Screen Sharing).
+echo 'XTerm*vt100.pointerMode: 0' | xrdb -merge
+vncconfig -nowin &
+xsetroot -fg '#2794d8' -bitmap <(
+cat <<EOF
+#define root_weave_width 4
+#define root_weave_height 4
+static char root_weave_bits[] = {
+   0x07, 0x0d, 0x0b, 0x0e};
+EOF
+)
+$flight_ROOT/opt/prboom/games/prboom

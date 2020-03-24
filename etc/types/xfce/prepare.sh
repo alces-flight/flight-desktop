@@ -34,6 +34,16 @@ contains() {
   return 1
 }
 
+if [ -f /etc/redhat-release ] && grep -q 'release 8' /etc/redhat-release; then
+  distro=rhel8
+fi
+
+if ! rpm -qa tigervnc-server-minimal | grep -q tigervnc-server-minimal ||
+   ! rpm -qa xorg-x11-xauth | grep -q xorg-x11-xauth; then
+  desktop_stage "Installing Flight Desktop prerequisites"
+  yum -y install tigervnc-server-minimal xorg-x11-xauth
+fi
+
 IFS=$'\n' groups=(
   $(
     yum grouplist hidden | \
@@ -41,15 +51,23 @@ IFS=$'\n' groups=(
   )
 )
 
-if ! yum --enablerepo=epel* --disablerepo=epel-testing* repolist | grep -q ^epel; then
-  desktop_stage "Enabling repository: EPEL"
-  yum -y install epel-release
-  yum makecache
+if [ "$distro" == "rhel8" ]; then
+  if ! yum --enablerepo=epel --disablerepo=epel-* repolist | grep -q '^*epel'; then
+    desktop_stage "Enabling repository: EPEL"
+    yum -y install epel-release
+    yum makecache
+  fi
+else
+  if ! yum --enablerepo=epel --disablerepo=epel-* repolist | grep -q ^epel; then
+    desktop_stage "Enabling repository: EPEL"
+    yum -y install epel-release
+    yum makecache
+  fi
 fi
 
 if ! contains 'Xfce' "${groups[@]}"; then
   desktop_stage "Installing package group: Xfce"
-  yum --enablerepo=epel* --disablerepo=epel-testing* -y groupinstall 'Xfce'
+  yum --enablerepo=epel --disablerepo=epel-* -y groupinstall 'Xfce'
 fi
 
 if ! rpm -qa evince | grep -q evince; then
