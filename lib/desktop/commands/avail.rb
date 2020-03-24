@@ -40,6 +40,7 @@ module Desktop
             Table.emit do |t|
               headers 'Name', 'Summary', 'State'
               Type.each do |t|
+                next if t.hidden
                 row Paint[t.name, :cyan],
                     word_wrap.call(
                       "#{Paint[t.summary, :green]}".tap do |s|

@@ -35,6 +35,18 @@ require_relative 'patches/unicode-display_width'
 
 module Desktop
   class Type
+    FUNC_DELIMITER = begin
+                       major, minor, patch =
+                                     IO.popen("/bin/bash -c 'echo $BASH_VERSION'")
+                                       .read.split('.')[0..2]
+                                       .map(&:to_i)
+                       (
+                         major > 4 ||
+                         major == 4 && minor > 3 ||
+                         major == 4 && minor == 3 && patch >= 27
+                       ) ? '%%' : '()'
+                     end
+
     class << self
       def each(&block)
         all.values.each(&block)
@@ -89,6 +101,7 @@ module Desktop
     attr_reader :url
     attr_reader :default
     attr_reader :arch
+    attr_reader :hidden
 
     def initialize(md, dir)
       @name = md[:name]
@@ -97,6 +110,7 @@ module Desktop
       @default = md[:default]
       @dir = dir
       @arch = md[:arch] || []
+      @hidden = md[:hidden] || false
     end
 
     def session_script
@@ -245,7 +259,7 @@ EOF
     end
 
     def setup_bash_funcs(h, fileno)
-      h['BASH_FUNC_flight_desktop_comms()'] = <<EOF
+      h["BASH_FUNC_flight_desktop_comms#{FUNC_DELIMITER}"] = <<EOF
 () { local msg=$1
  shift
  if [ "$1" ]; then
@@ -255,9 +269,9 @@ EOF
  fi
 }
 EOF
-      h['BASH_FUNC_desktop_err()'] = "() { flight_desktop_comms ERR \"$@\"\n}"
-      h['BASH_FUNC_desktop_stage()'] = "() { flight_desktop_comms STAGE \"$@\"\n}"
-      h['BASH_FUNC_desktop_miss()'] = "() { flight_desktop_comms MISS \"$@\"\n}"
+      h["BASH_FUNC_desktop_err#{FUNC_DELIMITER}"] = "() { flight_desktop_comms ERR \"$@\"\n}"
+      h["BASH_FUNC_desktop_stage#{FUNC_DELIMITER}"] = "() { flight_desktop_comms STAGE \"$@\"\n}"
+      h["BASH_FUNC_desktop_miss#{FUNC_DELIMITER}"] = "() { flight_desktop_comms MISS \"$@\"\n}"
 #      h['BASH_FUNC_desktop_cat()'] = "() { flight_desktop_comms\n}"
 #      h['BASH_FUNC_desktop_echo()'] = "() { flight_desktop_comms DATA \"$@\"\necho \"$@\"\n}"
     end
