@@ -33,7 +33,6 @@ module Desktop
       flight_COMMAND_ROOT
       flight_MODE
       flight_NAME
-      flight_ROOT
       FLIGHT_PROGRAM_NAME
       FLIGHT_CWD
       SSL_CERT_FILE
