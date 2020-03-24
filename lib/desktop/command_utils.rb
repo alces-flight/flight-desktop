@@ -25,6 +25,7 @@
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
 require_relative 'network_utils'
+require 'timeout'
 
 module Desktop
   module CommandUtils
@@ -212,7 +213,13 @@ EOF
 
       def generate_password
         if File.executable?('/usr/bin/apg')
-          `/usr/bin/apg -n1 -M Ncl -m 8 -x 8`.chomp
+          begin
+            Timeout.timeout(5) do
+              `/usr/bin/apg -n1 -M Ncl -m 8 -x 8`.chomp
+            end
+          rescue Timeout::Error
+            SecureRandom.urlsafe_base64[0..7].tr('-_','fl')
+          end
         else
           SecureRandom.urlsafe_base64[0..7].tr('-_','fl')
         end
