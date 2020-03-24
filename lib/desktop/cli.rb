@@ -172,6 +172,7 @@ Available desktop types can be shown using the 'avail' command.
 EOF
     end
     alias_command :s, :start
+    alias_command :st, :start
 
     command :set do |c|
       cli_syntax(c, '[NAME=VALUE...]')
