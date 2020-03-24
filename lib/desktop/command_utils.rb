@@ -29,6 +29,16 @@ require 'timeout'
 
 module Desktop
   module CommandUtils
+    ENV_BLACKLIST = %w(
+      flight_COMMAND_ROOT
+      flight_MODE
+      flight_NAME
+      flight_ROOT
+      FLIGHT_PROGRAM_NAME
+      FLIGHT_CWD
+      SSL_CERT_FILE
+    )
+
     class << self
       def command(cmd)
         Paint%[
@@ -231,6 +241,18 @@ EOF
         else
           msg = Bundler.respond_to?(:with_unbundled_env) ? :with_unbundled_env : :with_clean_env
           Bundler.__send__(msg) { block.call }
+        end
+      end
+
+      def with_cleanest_env(&block)
+        with_clean_env do
+          original_env = ENV.clone
+          ENV_BLACKLIST.each {|k| original_env.delete(k)}
+          begin
+            block.call
+          ensure
+            ENV.clear.replace(original_env)
+          end
         end
       end
     end

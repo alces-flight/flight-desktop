@@ -165,7 +165,7 @@ module Desktop
     end
 
     def start(geometry: Config.geometry)
-      CommandUtils.with_clean_env do
+      CommandUtils.with_cleanest_env do
         create_password_file
         install_session_script
         start_vnc_server(geometry: geometry) &&
