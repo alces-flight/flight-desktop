@@ -121,9 +121,9 @@ fi
 
 unset DBUS_SESSION_BUS_ADDRESS
 xfce4-session &
+xfce4_session_pid=$!
 
 # This dance is to allow us to disable disgusting sub pixel hinting
-xfce4_session_pid=$!
 while [ -z "$addr" -a -d /proc/$xfce4_session_pid ]; do
     addr=$(grep -z "DBUS_SESSION_BUS_ADDRESS" /proc/$xfce4_session_pid/environ)
     sleep 1
@@ -134,4 +134,4 @@ if [ "$addr" ]; then
     echo "DBUS: $DBUS_SESSION_BUS_ADDRESS"
     xfconf-query -v -c xsettings -p /Xft/HintStyle -s hintnone
 fi
-wait
+wait $xfce4_session_pid
