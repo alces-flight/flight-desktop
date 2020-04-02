@@ -48,6 +48,12 @@ ResultActive=yes
 EOF
 }
 
+if ! rpm -qa tigervnc-server-minimal | grep -q tigervnc-server-minimal ||
+   ! rpm -qa xorg-x11-xauth | grep -q xorg-x11-xauth; then
+  desktop_stage "Installing Flight Desktop prerequisites"
+  yum -y install tigervnc-server-minimal xorg-x11-xauth
+fi
+
 if ! [ -f /etc/polkit-1/localauthority/10-vendor.d/20-flight-desktop-gnome.pkla ]; then
   policy_group=wheel
   if [ "${policy_group}" ]; then
@@ -65,12 +71,6 @@ contains() {
 
 if [ -f /etc/redhat-release ] && grep -q 'release 8' /etc/redhat-release; then
   distro=rhel8
-fi
-
-if ! rpm -qa tigervnc-server-minimal | grep -q tigervnc-server-minimal ||
-   ! rpm -qa xorg-x11-xauth | grep -q xorg-x11-xauth; then
-  desktop_stage "Installing Flight Desktop prerequisites"
-  yum -y install tigervnc-server-minimal xorg-x11-xauth
 fi
 
 IFS=$'\n' groups=(
