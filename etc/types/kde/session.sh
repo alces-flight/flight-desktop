@@ -36,17 +36,34 @@ startkde &
 kdepid=$!
 bg_image="${flight_DESKTOP_bg_image:-${flight_DESKTOP_root}/etc/assets/backgrounds/default.jpg}"
 if [ -f "${bg_image}" ]; then
-  while [ ! -f ~/.kde/share/config/plasma-desktop-appletsrc ]; do
-    sleep 1
-  done
-  echo "Sleeping [1/3]..."
-  sleep 5
-  python "${flight_DESKTOP_root}"/etc/types/kde/set_kde_wallpaper.py "$bg_image" "$HOME"
-  echo "Sleeping [2/3]..."
-  sleep 2
-  kquitapp plasma-desktop
-  echo "Sleeping [3/3]..."
-  sleep 2
-  kstart plasma-desktop
+  if [ -f /etc/redhat-release ] && grep -q 'release 7' /etc/redhat-release; then
+    while [ ! -f ~/.kde/share/config/plasma-desktop-appletsrc ]; do
+      sleep 1
+    done
+    echo "Sleeping [1/3]..."
+    sleep 5
+    python "${flight_DESKTOP_root}"/etc/types/kde/set_kde_wallpaper.py "$bg_image" "$HOME"
+    echo "Sleeping [2/3]..."
+    sleep 2
+    kquitapp plasma-desktop
+    echo "Sleeping [3/3]..."
+    sleep 2
+    kstart plasma-desktop
+  else
+    sleep 5
+    dbus-send --session --dest=org.kde.plasmashell \
+              --type=method_call /PlasmaShell \
+              org.kde.PlasmaShell.evaluateScript \
+              'string:
+                var Desktops = desktops();
+                for (i=0;i<Desktops.length;i++) {
+                  d = Desktops[i];
+                  d.wallpaperPlugin = "org.kde.image";
+                  d.currentConfigGroup = Array("Wallpaper",
+                                               "org.kde.image",
+                                               "General");
+                  d.writeConfig("Image", "file://'$bg_image'");
+                }'
+  fi
 fi
 wait $kdepid
