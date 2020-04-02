@@ -145,8 +145,10 @@ mark_initial_setup_done() {
 install_geometry_script
 install_background_script
 mark_initial_setup_done
-export GNOME_SHELL_SESSION_MODE=classic
-_GNOME_PARAMS="--session=gnome-classic"
+if [ -f /etc/redhat-release ]; then
+  export GNOME_SHELL_SESSION_MODE=classic
+  _GNOME_PARAMS="--session=gnome-classic"
+fi
 
 if [ "$1" ]; then
   "$@" &
