@@ -43,6 +43,8 @@ module Desktop
         else
           raise 'command not defined'
         end
+      rescue TTY::Reader::InputInterrupt
+        raise Interrupt
       end
 
       def respond_to_missing?(s)
@@ -50,6 +52,7 @@ module Desktop
       end
 
       private
+
       def to_class(s)
         s.to_s.split('-').reduce(self) do |clazz, p|
           p.gsub!(/_(.)/) {|a| a[1].upcase}
