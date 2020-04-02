@@ -133,7 +133,7 @@ module Desktop
     def prepare(force: false)
       return true if !force && verified?
       puts "Preparing desktop type #{Paint[name, :cyan]}:\n\n"
-      if run_script(File.join(@dir, 'prepare.sh'), prep_dir, 'prepare')
+      if run_script(File.join(@dir, prepare_script), prep_dir, 'prepare')
         File.open(File.join(prep_dir, 'state.yml'), 'w') do |io|
           io.write({verified: true}.to_yaml)
         end
@@ -158,7 +158,7 @@ EOF
       ctx = {
         missing: []
       }
-      success = run_script(File.join(@dir, 'verify.sh'), verify_dir, 'verify', ctx)
+      success = run_script(File.join(@dir, verify_script), verify_dir, 'verify', ctx)
       if ctx[:missing].empty? && success
         File.open(File.join(verify_dir, 'state.yml'), 'w') do |io|
           io.write({verified: true}.to_yaml)
@@ -202,6 +202,34 @@ EOF
     end
 
     private
+    def distro
+      if File.exists?('/etc/redhat-release')
+        'rhel'
+      elsif File.exists?('/etc/debian_version')
+        'debian'
+      end
+    end
+
+    def verify_script
+      @verify_script ||=
+        case distro
+        when 'rhel'
+          'verify.sh'
+        else
+          "verify.#{distro}.sh"
+        end
+    end
+
+    def prepare_script
+      @prepare_script ||=
+        case distro
+        when 'rhel'
+          'prepare.sh'
+        else
+          "prepare.#{distro}.sh"
+        end
+    end
+
     def run_fork(context = {}, &block)
       Signal.trap('INT','IGNORE')
       rd, wr = IO.pipe
@@ -299,7 +327,7 @@ EOF
           end
         end
       else
-        raise IncompleteTypeError, "no preparation script provided for type: #{name}"
+        raise IncompleteTypeError, "no #{op} script provided for type: #{name}"
       end
     end
 
