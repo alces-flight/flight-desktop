@@ -32,8 +32,16 @@
 echo 'XTerm*vt100.pointerMode: 0' | xrdb -merge
 vncconfig -nowin &
 
-startkde &
-kdepid=$!
+if which startkde &>/dev/null; then
+  startkde &
+  kdepid=$!
+elif which startplasma-x11 &>/dev/null; then
+  startplasma-x11 &
+  kdepid=$!
+else
+  echo "Unable to find KDE starter"
+  exit 1
+fi
 bg_image="${flight_DESKTOP_bg_image:-${flight_DESKTOP_root}/etc/assets/backgrounds/default.jpg}"
 if [ -f "${bg_image}" ]; then
   if [ -f /etc/redhat-release ] && grep -q 'release 7' /etc/redhat-release; then
