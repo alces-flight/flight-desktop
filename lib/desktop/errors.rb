@@ -25,12 +25,32 @@
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
 module Desktop
-  UnknownDesktopTypeError = Class.new(RuntimeError)
-  SessionOperationError = Class.new(RuntimeError)
-  TypeOperationError = Class.new(RuntimeError)
-  InterruptedOperationError = Class.new(RuntimeError)
-  SessionNotFoundError = Class.new(RuntimeError)
-  IncompleteTypeError = Class.new(RuntimeError)
-  UnverifiedTypeError = Class.new(RuntimeError)
-  InvalidSettingError = Class.new(RuntimeError)
+  class Error < RuntimeError
+    def self.define_class(code)
+      Class.new(self).tap do |klass|
+        klass.instance_variable_set(:@exit_code, code)
+      end
+    end
+
+    def self.exit_code
+      @exit_code || begin
+        parent.respond_to?(:exit_code) ? parent.exit_code : 2
+      end
+    end
+
+    def exit_code
+      self.class.exit_code
+    end
+  end
+
+  SessionNotFoundError = Error.define_class(3)
+  UnknownDesktopTypeError = Error.define_class(4)
+
+  IncompleteTypeError = Error.define_class(5)
+  UnverifiedTypeError = Error.define_class(6)
+  InvalidSettingError = Error.define_class(7)
+
+  SessionOperationError = Error.define_class(8)
+  TypeOperationError = Error.define_class(9)
+  InterruptedOperationError = Error.define_class(10)
 end
