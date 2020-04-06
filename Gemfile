@@ -2,7 +2,7 @@
 
 source 'https://rubygems.org'
 
-gem 'commander-openflighthpc', '~> 2.0'
+gem 'commander-openflighthpc', '<3', '>=2.0.1'
 gem 'tty-table'
 gem 'tty-config'
 gem 'tty-prompt'

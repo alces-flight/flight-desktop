@@ -55,6 +55,19 @@ module Desktop
       Paint.mode = 0
     end
 
+    # --json is a global option so it doesn't have to be manually
+    # to each command. Instead it dynamically configures itself onto
+    # each Command instance
+    global_option('--json', 'Output the result as JSON') do
+      # The instance variable is duplicated as it will throw a
+      # nil error if it was to change
+      active_command # Initialization Only!
+      @__active_command = @__active_command.dup.tap do |cmd|
+        cmd.instance_exec { @options = @options.dup }
+        cmd.option '--json', 'Dynamic JSON flag', default: true
+      end
+    end
+
     class << self
       def cli_syntax(command, args_str = nil)
         command.syntax = [

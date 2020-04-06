@@ -43,5 +43,9 @@ module Desktop
     def run
       raise NotImplementedError
     end
+
+    def json?
+      options.json ? true : false
+    end
   end
 end
