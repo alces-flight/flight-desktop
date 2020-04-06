@@ -37,5 +37,5 @@ Bundler.setup(:default)
 
 require 'desktop/cli'
 Dir.chdir(ENV.fetch('FLIGHT_CWD','.'))
-Desktop::CLI.run!
+Desktop::CLI.run!(*ARGV)
 

@@ -4,18 +4,12 @@ GIT
   specs:
     xdg (3.0.2)
 
-GIT
-  remote: https://github.com/openflighthpc/commander-openflighthpc
-  revision: 5aca574882a9709a6dbc3fd0eabc7813997597b3
-  tag: v2.0.0.b0
-  specs:
-    commander-openflighthpc (1.2.0)
-      highline (~> 1.7.2)
-      paint (~> 2.1.0)
-
 GEM
   remote: https://rubygems.org/
   specs:
+    commander-openflighthpc (2.0.0)
+      highline (~> 1.7.2)
+      paint (~> 2.1.0)
     equatable (0.6.1)
     ffi (1.11.1)
     highline (1.7.10)
@@ -66,7 +60,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  commander-openflighthpc!
+  commander-openflighthpc (~> 2.0)
   ronn
   sys-proctable
   tty-config
