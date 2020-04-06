@@ -94,6 +94,10 @@ module Desktop
         @user_verify_path ||= File.join(xdg_data.home, DESKTOP_DIR_SUFFIX, 'types')
       end
 
+      def debug?
+        data.fetch(:debug, default: false)
+      end
+
       def vnc_passwd_program
         @vnc_passwd_program ||=
           data.fetch(

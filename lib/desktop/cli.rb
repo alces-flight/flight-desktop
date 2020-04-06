@@ -24,6 +24,14 @@
 # For more information on Flight Desktop, please visit:
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
+
+require_relative 'config'
+
+if Desktop::Config.debug?
+  require 'pry'
+  require 'pry-byebug'
+end
+
 require_relative 'commands'
 require_relative 'version'
 

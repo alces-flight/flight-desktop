@@ -11,3 +11,8 @@ gem 'ronn'
 gem 'whirly'
 gem 'sys-proctable'
 
+group :development do
+  gem 'pry'
+  gem 'pry-byebug'
+end
+
