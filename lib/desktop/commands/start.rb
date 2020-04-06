@@ -39,8 +39,10 @@ module Desktop
 
       def run
         assert_functional
-        if !type.verified?
+        success = if !type.verified?
           raise UnverifiedTypeError, "Desktop type '#{type.name}' has not been verified"
+        elsif json?
+          start
         else
           puts "Starting a '#{Paint[type.name, :cyan]}' desktop session:\n\n"
           status_text = Paint["Starting session", '#2794d8']
@@ -52,23 +54,29 @@ module Desktop
               append_newline: false,
               status: status_text
             )
-            success = session.start(geometry: @options.geometry || Config.geometry)
-            Whirly.stop
+            start.tap do |s|
+              Whirly.stop
+              puts "#{s ? "\u2705" : "\u274c"} #{status_text}\n\n"
+            end
           rescue
             puts "\u274c #{status_text}\n\n"
             raise
           end
-          puts "#{success ? "\u2705" : "\u274c"} #{status_text}\n\n"
-          if success
-            puts "A '#{Paint[type.name, :cyan]}' desktop session has been started."
-            CommandUtils.emit_details(session, :access_summary)
-          else
-            raise SessionOperationError, "unable to start session"
-          end
+        end
+        if success
+          puts "A '#{Paint[type.name, :cyan]}' desktop session has been started."
+          CommandUtils.emit_details(session, :access_summary)
+        else
+          raise SessionOperationError, "unable to start session"
         end
       end
 
       private
+
+      def start
+        session.start(geometry: @options.geometry || Config.geometry)
+      end
+
       def type
         @type ||= (args[0] && Type[args[0]]) || Type.default
       end
