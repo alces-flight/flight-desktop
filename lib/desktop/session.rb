@@ -97,6 +97,20 @@ module Desktop
       end
     end
 
+    def to_json
+      as_json.to_json
+    end
+
+    def as_json
+      base = [
+        :host_name, :ip, :state, :password, :websocket_port, :display
+      ].map { |k| [k, send(k)] }.to_h
+      base[:vnc_port] = port
+      base[:type] = type.name
+      base[:id] = uuid
+      base
+    end
+
     def state
       @state
     end

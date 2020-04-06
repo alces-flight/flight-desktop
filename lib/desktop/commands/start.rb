@@ -63,7 +63,9 @@ module Desktop
             raise
           end
         end
-        if success
+        if success && json?
+          puts session.to_json
+        elsif success
           puts "A '#{Paint[type.name, :cyan]}' desktop session has been started."
           CommandUtils.emit_details(session, :access_summary)
         else
