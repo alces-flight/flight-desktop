@@ -32,7 +32,11 @@ module Desktop
   module Commands
     class Show < Command
       def run
-        CommandUtils.emit_details(session, :access_details)
+        if json?
+          puts session.to_json
+        else
+          CommandUtils.emit_details(session, :access_details)
+        end
       end
 
       private
