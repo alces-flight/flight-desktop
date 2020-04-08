@@ -34,6 +34,20 @@ module Desktop
     class Kill < Command
       def run
         if session.active?
+          run_kill
+        elsif session.local?
+          raise SessionOperationError, "session #{session.uuid} is not active"
+        else
+          raise SessionOperationError, "session #{session.uuid} is not local"
+        end
+      end
+
+      private
+
+      def run_kill
+        success = if json?
+          session.kill
+        else
           puts "Killing desktop session #{Paint[session.uuid, :magenta]}:\n\n"
           status_text = Paint["Terminating session", '#2794d8']
           print "   > "
@@ -44,26 +58,24 @@ module Desktop
               append_newline: false,
               status: status_text
             )
-            success = session.kill
-            Whirly.stop
+            session.kill.tap do |s|
+              Whirly.stop
+              puts "#{success ? "\u2705" : "\u274c"} #{status_text}\n\n"
+            end
           rescue
             puts "\u274c #{status_text}\n\n"
             raise
           end
-          puts "#{success ? "\u2705" : "\u274c"} #{status_text}\n\n"
-          if success
-            puts "Desktop session '#{Paint[session.uuid, :magenta]}' has been terminated.\n\n"
-          else
-            raise SessionOperationError, "unable to terminate session"
-          end
-        elsif session.local?
-          raise SessionOperationError, "session #{session.uuid} is not active"
+        end
+        if success && json?
+          puts session.to_json
+        elsif success
+          puts "Desktop session '#{Paint[session.uuid, :magenta]}' has been terminated.\n\n"
         else
-          raise SessionOperationError, "session #{session.uuid} is not local"
+          raise SessionOperationError, "unable to terminate session"
         end
       end
 
-      private
       def uuid
         @uuid ||= args[0][0] == ':' ? nil : args[0]
       end

@@ -88,12 +88,7 @@ module Desktop
         @state = :new
       else
         @uuid = uuid
-        begin
-          load
-        rescue
-          @metadata = {}
-          @state = :broken
-        end
+        load_metadata
       end
     end
 
@@ -173,6 +168,7 @@ module Desktop
         end
         rc = $?
         $?.success?.tap do |s|
+          s ? @state = :killed : load_metadata
           clean if s && ENV['flight_DESKTOP_debug'].nil?
         end
       end
@@ -309,6 +305,7 @@ module Desktop
     end
 
     private
+
     def allocate_websocket_port
       free_port = (@metadata[:display] || 0).to_i + 41360
       begin
@@ -324,7 +321,7 @@ module Desktop
       free_port
     end
 
-    def load
+    def load_metadata
       metadata = YAML.load_file(metadata_file)
       @metadata = metadata[:metadata]
       @type = Type[metadata[:type]]
@@ -334,6 +331,9 @@ module Desktop
       @websocket_pid = metadata[:websocket_pid]
       @host_name = metadata[:host_name]
       @state = active? ? :active : :exited
+    rescue
+      @metadata = {}
+      @state = :broken
     end
 
     def save
