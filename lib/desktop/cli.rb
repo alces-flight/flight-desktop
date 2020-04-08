@@ -29,6 +29,7 @@ require_relative 'version'
 
 require 'tty/reader'
 require 'commander'
+require_relative 'patches/highline-ruby_27_compat'
 
 module Desktop
   module CLI
