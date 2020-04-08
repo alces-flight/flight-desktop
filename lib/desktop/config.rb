@@ -95,7 +95,8 @@ module Desktop
       end
 
       def debug?
-        data.fetch(:debug, default: false)
+        default = ENV['flight_DESKTOP_debug'] ? true : false
+        data.fetch(:debug, default: default)
       end
 
       def vnc_passwd_program

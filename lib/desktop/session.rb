@@ -163,9 +163,7 @@ module Desktop
           ]
         ) do |io|
           lines = io.readlines
-          if ENV['flight_DESKTOP_debug']
-            puts lines.inspect
-          end
+          $stderr.puts lines.inspect if Config.debug?
         end
         rc = $?
         $?.success?.tap do |s|
@@ -276,7 +274,7 @@ module Desktop
         yaml_content = ""
         keep = false
         io.readlines.each do |l|
-          puts l.inspect if ENV['flight_DESKTOP_debug']
+          $stderr.puts l.inspect if Config.debug?
           if l == "<YAML>\n"
             keep = true
           elsif l == "</YAML>\n"
