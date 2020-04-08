@@ -80,12 +80,12 @@ module Desktop
     attr_reader :uuid, :type, :metadata, :host_name, :state, :websocket_port
 
     def initialize(uuid: nil, type: nil)
+      @state = :new # Ensure the state is not initially dynamic
       if uuid.nil?
         @uuid = SecureRandom.uuid
         @type = type
         @metadata = {}
         @host_name = Socket.gethostname.split('.')[0]
-        @state = :new
       else
         @uuid = uuid
         load_metadata
@@ -98,7 +98,7 @@ module Desktop
 
     def as_json(**_)
       base = [
-        :host_name, :ip, :state, :password, :websocket_port, :display
+        :host_name, :ip, :password, :websocket_port, :display, :state
       ].map { |k| [k, send(k)] }.to_h
       base[:vnc_port] = port
       base[:type] = type&.name
@@ -107,7 +107,20 @@ module Desktop
     end
 
     def state
-      @state
+      # Returned the hard set state:
+      #   :new || :killed || :cleaned
+      if @state
+        @state
+      # Determine the state dynamically
+      elsif broken?
+        :broken
+      elsif local? && active?
+        :active
+      elsif local?
+        :exited
+      else
+        :remote
+      end
     end
 
     def ip
@@ -292,11 +305,16 @@ module Desktop
       rc.success?
     end
 
+    def broken?
+      @broken || false
+    end
+
     def active?
-      if @state != :broken && local? && File.exists?(pidfile)
-        pid = File.read(pidfile)
-        !!Sys::ProcTable.ps(pid: pid.to_i)
-      end
+      return false if broken?
+      return false unless local?
+      return false unless File.exists?(pidfile)
+      pid = File.read(pidfile)
+      !!Sys::ProcTable.ps(pid: pid.to_i)
     end
 
     def local?
@@ -321,6 +339,8 @@ module Desktop
     end
 
     def load_metadata
+      @broken = nil # Reset the broken status
+      @state = nil # Determine the state dynamically
       metadata = YAML.load_file(metadata_file)
       @metadata = metadata[:metadata]
       @type = Type[metadata[:type]]
@@ -329,10 +349,9 @@ module Desktop
       @websocket_port = metadata[:websocket_port] || 0
       @websocket_pid = metadata[:websocket_pid]
       @host_name = metadata[:host_name]
-      @state = active? ? :active : :exited
     rescue
       @metadata = {}
-      @state = :broken
+      @broken = true
     end
 
     def save

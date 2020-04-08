@@ -32,16 +32,16 @@ module Desktop
   module Commands
     class List < Command
       def run
-        if $stdout.tty?
-          if Session.all.empty?
-            puts "No desktop sessions found."
-          else
-            session_to_array = method(:session_to_array)
-            Table.emit do |t|
-              headers 'Identity', 'Type', 'Host name', 'IP address', 'Display (Port)', 'Password', 'State'
-              Session.each do |s|
-                row *session_to_array.call(s)
-              end
+        if json?
+          puts Session.each.to_a.to_json
+        elsif Session.all.empty?
+          $stderr.puts "No desktop sessions found."
+        elsif $stdout.tty?
+          session_to_array = method(:session_to_array)
+          Table.emit do |t|
+            headers 'Identity', 'Type', 'Host name', 'IP address', 'Display (Port)', 'Password', 'State'
+            Session.each do |s|
+              row *session_to_array.call(s)
             end
           end
         else
@@ -68,6 +68,7 @@ module Desktop
       end
 
       private
+
       def session_to_array(s)
         if s.state == :broken
           [
@@ -87,7 +88,7 @@ module Desktop
             s.ip,
             ":#{s.display} (#{s.port})",
             s.password,
-            s.local? ? (s.active? ? 'Active' : 'Exited') : 'Remote'
+            s.state.to_s.capitalize
           ]
         end
       end
