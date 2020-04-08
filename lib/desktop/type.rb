@@ -65,7 +65,7 @@ module Desktop
           begin
             {}.tap do |h|
               Config.type_paths.each do |p|
-                Dir[File.join(p,'*')].sort.each do |d|
+                Dir[File.join(p,'*'),File.join(p,'.[a-z]*')].sort.each do |d|
                   begin
                     md = YAML.load_file(File.join(d,'metadata.yml'))
                     t = Type.new(md, d)
@@ -110,7 +110,7 @@ module Desktop
       @default = md[:default]
       @dir = dir
       @arch = md[:arch] || []
-      @hidden = md[:hidden] || false
+      @hidden = (File.basename(dir)[0] == '.' || md[:hidden] || false)
     end
 
     def session_script
