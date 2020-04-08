@@ -34,16 +34,28 @@ module Desktop
           clean(session)
         else
           if Session.all.empty?
-            puts "No desktop sessions found."
+            $stderr.puts "No desktop sessions found."
           else
-            Session.each do |s|
-              clean(s)
-            end
+            Session.each { |s| clean(s) }
+          end
+        end
+        if json?
+          puts [*cleaned, *failed].to_json
+        else
+          skipped.each do |target, msg|
+            $stderr.puts "#{target.uuid}: #{msg}"
+          end
+          failed.each do |target|
+            $stderr.puts "#{target.uuid}: cleaning failed"
+          end
+          cleaned.each do |target|
+            puts "#{target.uuid}: cleaned"
           end
         end
       end
 
       private
+
       def uuid
         @uuid ||= args[0][0] == ':' ? nil : args[0]
       end
@@ -67,16 +79,28 @@ module Desktop
 
       def clean(target)
         if !target.local?
-          puts "#{target.uuid}: skipping; not local"
+          skipped << [target, 'not local']
         elsif !target.active?
           if target.clean
-            puts "#{target.uuid}: cleaned"
+            cleaned << target
           else
-            puts "#{target.uuid}: cleaning failed"
+            failed << target
           end
         else
-          puts "#{target.uuid}: skipping; currently active"
+          skipped << [target, 'currently active']
         end
+      end
+
+      def cleaned
+        @cleaned ||= []
+      end
+
+      def failed
+        @failed ||= []
+      end
+
+      def skipped
+        @skipped ||= []
       end
     end
   end

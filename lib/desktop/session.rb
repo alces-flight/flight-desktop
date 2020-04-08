@@ -92,16 +92,16 @@ module Desktop
       end
     end
 
-    def to_json
-      as_json.to_json
+    def to_json(**opts)
+      as_json.to_json(opts)
     end
 
-    def as_json
+    def as_json(**_)
       base = [
         :host_name, :ip, :state, :password, :websocket_port, :display
       ].map { |k| [k, send(k)] }.to_h
       base[:vnc_port] = port
-      base[:type] = type.name
+      base[:type] = type&.name
       base[:id] = uuid
       base
     end
@@ -148,6 +148,7 @@ module Desktop
 
     def clean
       FileUtils.rm_rf(session_dir_path)
+      @state = :cleaned
     end
 
     def kill
