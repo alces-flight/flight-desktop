@@ -27,11 +27,23 @@
 require_relative '../command'
 require_relative '../errors'
 require_relative '../type'
+require_relative '../io_redirect'
 
 module Desktop
   module Commands
     class Prepare < Command
       def run
+        if json?
+          IORedirect.new.run { run_prepare }
+          puts type.to_json
+        else
+          run_prepare
+        end
+      end
+
+      private
+
+      def run_prepare
         if type.verified? && !@options.force
           puts "Desktop type #{Paint[type.name, :cyan]} has already been verified."
         else
@@ -43,7 +55,6 @@ module Desktop
         end
       end
 
-      private
       def type
         @type ||= Type[args[0]]
       end
