@@ -58,7 +58,7 @@ module Desktop
     # --json is a global option so it doesn't have to be manually
     # to each command. Instead it dynamically configures itself onto
     # each Command instance
-    global_option('--json', 'Output the result as JSON') do
+    global_option('--json', 'Output to standard out in JSON') do
       # The instance variable is duplicated as it will throw a
       # nil error if it was to change
       active_command # Initialization Only!

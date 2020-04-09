@@ -55,8 +55,16 @@ module Desktop
           end
           updates.each(&:call)
         end
-        puts "Default desktop type: #{Config.desktop_type.name}"
-        puts "    Default geometry: #{Config.geometry}"
+        if json?
+          j = {
+            default_desktop: Config.desktop_type.name,
+            default_geometry: Config.geometry
+          }.to_json
+          puts j
+        else
+          puts "Default desktop type: #{Config.desktop_type.name}"
+          puts "    Default geometry: #{Config.geometry}"
+        end
       end
     end
   end
