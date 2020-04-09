@@ -98,14 +98,21 @@ module Desktop
 
     def as_json(**_)
       base = [
-        :host_name, :ip, :password, :websocket_port, :display, :state
+        :host_name, :ip, :password, :websocket_port, :display
       ].map { |k| [k, send(k)] }.to_h
       base[:vnc_port] = port
       base[:type] = type&.name
+      base[:status] = state.to_s
       base[:id] = uuid
       base
     end
 
+    # NOTE: The term 'state' is overloaded and could refer to related
+    # but different concepts. The first being the machine readable output
+    # and the other human readable.
+    #
+    # The state described here is the machine readable format and is translated
+    # to the status key in the `as_json` method
     def state
       # Returned the hard set state:
       #   :new || :killed || :cleaned
