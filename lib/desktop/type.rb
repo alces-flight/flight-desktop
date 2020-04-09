@@ -113,6 +113,19 @@ module Desktop
       @hidden = md[:hidden] || false
     end
 
+    def as_json(**_)
+      {
+        'name' => name,
+        'summary' => summary.chomp.gsub("\n", ' '),
+        'url' => url,
+        'verified' => verified?,
+      }
+    end
+
+    def to_json(**opts)
+      as_json(**opts).to_json
+    end
+
     def session_script
       @session_script ||= File.join(@dir, 'session.sh')
     end

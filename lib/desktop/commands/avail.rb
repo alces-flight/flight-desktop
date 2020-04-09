@@ -32,24 +32,24 @@ module Desktop
   module Commands
     class Avail < Command
       def run
-        if $stdout.tty?
-          if Type.all.empty?
-            puts "No desktop types found."
-          else
-            word_wrap = method(:word_wrap)
-            Table.emit do |t|
-              headers 'Name', 'Summary', 'State'
-              Type.each do |t|
-                next if t.hidden
-                row Paint[t.name, :cyan],
-                    word_wrap.call(
-                      "#{Paint[t.summary, :green]}".tap do |s|
-                        s << "\n > #{Paint[t.url, :blue, :bright, :underline]}\n " if t.url
-                      end,
-                      line_width: TTY::Screen.width - 30
-                    ),
-                    t.verified? ? 'Verified' : 'Unverified'
-              end
+        if json?
+          puts Type.each.to_a.to_json
+        elsif Type.all.empty?
+          $stderr.puts "No desktop types found."
+        elsif $stdout.tty?
+          word_wrap = method(:word_wrap)
+          Table.emit do |t|
+            headers 'Name', 'Summary', 'State'
+            Type.each do |t|
+              next if t.hidden
+              row Paint[t.name, :cyan],
+                  word_wrap.call(
+                    "#{Paint[t.summary, :green]}".tap do |s|
+                      s << "\n > #{Paint[t.url, :blue, :bright, :underline]}\n " if t.url
+                    end,
+                    line_width: TTY::Screen.width - 30
+                  ),
+                  t.verified? ? 'Verified' : 'Unverified'
             end
           end
         else
