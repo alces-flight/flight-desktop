@@ -25,40 +25,33 @@
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
 
-require_relative '../command'
-require_relative '../type'
-require_relative '../io_redirect'
+require 'stringio'
 
 module Desktop
-  module Commands
-    class Verify < Command
-      def run
-        if json?
-          IORedirect.new.run { run_verify }
-          puts type.to_json
-        else
-          run_verify
-        end
-      end
+  IORedirect = Struct.new(:stdout, :stderr) do
+    attr_reader :stdout, :stderr
 
-      private
+    def initialize(*_)
+      super
+      @stdout ||= StringIO.new
+      @stderr ||= StringIO.new
+      raise <<~ERROR if stdout == STDOUT || stderr == STDERR
+        Can not redirect to the default STDOUT or STDERR
+      ERROR
+    end
 
-      def run_verify
-        if options.force
-          type.verify(force: true)
-        elsif type.verified?
-          $stderr.puts <<~MSG
-            Desktop type #{Paint[type.name, :cyan]} has already been verified.
-          MSG
-          true
-        else
-          type.verify(force: false)
-        end
-      end
-
-      def type
-        @type ||= Type[args[0]]
-      end
+    def run
+      old_stdout = $stdout
+      old_stderr = $stderr
+      $stdout = stdout
+      $stderr = stderr
+      yield if block_given?
+    ensure
+      $stdout = old_stdout
+      $stderr = old_stderr
+      stdout.rewind
+      stderr.rewind
     end
   end
 end
+
