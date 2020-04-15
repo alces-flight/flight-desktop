@@ -250,6 +250,7 @@ module Desktop
           if bg_image = Config.bg_image
             h['flight_DESKTOP_bg_image'] = File.expand_path(bg_image, Config.root)
           end
+          h['flight_DESKTOP_geometry'] = Config.geometry
         end,
         [
           Config.vnc_server_program,
