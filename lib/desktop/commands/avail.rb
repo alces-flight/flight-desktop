@@ -54,6 +54,7 @@ module Desktop
           end
         else
           Type.each do |t|
+            next if t.hidden
             puts [t.name, t.summary.chomp.gsub("\n"," "), t.url, t.verified? ? 'Verified' : 'Unverified'].join("\t")
           end
         end
