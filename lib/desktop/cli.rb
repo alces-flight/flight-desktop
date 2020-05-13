@@ -104,6 +104,20 @@ DESKTOP is specified, data for all sessions that are marked as
 EOF
     end
 
+    command :doctor do |c|
+      cli_syntax(c)
+      c.summary = 'Perform diagnostics and display results'
+      c.action Commands, :doctor
+      c.option '--json', 'Output machine readable response in JSON format'
+      c.description = <<EOF
+Perform a series of diagnostics regarding available functionality and
+display the results.
+
+Tests will be made to determine the availability of required and
+optional dependencies.
+EOF
+    end
+
     command :show do |c|
       cli_syntax(c, 'DESKTOP')
       c.summary = 'Show information about a desktop session'
