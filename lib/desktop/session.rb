@@ -165,14 +165,17 @@ module Desktop
     end
 
     def start(geometry: Config.geometry)
-      CommandUtils.with_cleanest_env do
-        create_password_file
-        install_session_script
-        start_vnc_server(geometry: geometry) &&
-          start_websocket_server &&
-          start_grabber &&
-          start_cleaner &&
-          save
+      h = (Dir.home rescue '/')
+      Dir.chdir(h) do
+        CommandUtils.with_cleanest_env do
+          create_password_file
+          install_session_script
+          start_vnc_server(geometry: geometry) &&
+            start_websocket_server &&
+            start_grabber &&
+            start_cleaner &&
+            save
+        end
       end
     end
 
