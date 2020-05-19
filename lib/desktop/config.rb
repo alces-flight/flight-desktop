@@ -77,11 +77,6 @@ module Desktop
         user_data.write(force: true)
       end
 
-      def path
-        config_path_provider.path ||
-          config_path_provider.paths.first
-      end
-
       def root
         @root ||= File.expand_path(File.join(__dir__, '..', '..'))
       end
@@ -90,8 +85,32 @@ module Desktop
         @session_path ||= File.join(xdg_cache.home, DESKTOP_DIR_SUFFIX, 'sessions')
       end
 
-      def user_verify_path
-        @user_verify_path ||= File.join(xdg_data.home, DESKTOP_DIR_SUFFIX, 'types')
+      def user_state_path
+        @user_state_path ||= File.join(xdg_data.home, DESKTOP_DIR_SUFFIX, 'state')
+      end
+
+      def user_log_path
+        @user_log_path ||= File.join(xdg_data.home, DESKTOP_DIR_SUFFIX, 'log')
+      end
+
+      def global_state_path
+        @global_state_path ||= File.expand_path(
+          data.fetch(
+            :global_state_path,
+            default: 'var/lib/desktop'
+          ),
+          Config.root
+        )
+      end
+
+      def global_log_path
+        @global_log_path ||= File.expand_path(
+          data.fetch(
+            :global_state_path,
+            default: 'var/log/desktop'
+          ),
+          Config.root
+        )
       end
 
       def vnc_passwd_program

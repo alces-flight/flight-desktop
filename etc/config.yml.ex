@@ -2,6 +2,10 @@
 # Directories containing desktop type definitions
 #type_paths:
 #  - etc/types
+# Directory containing global desktop verification state
+#global_state_path: var/lib/desktop
+# Directory containing log files from state operations
+#global_log_path: var/log/desktop
 # Global setting for default desktop type
 #desktop_type: gnome
 # Global setting for default geometry

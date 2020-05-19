@@ -126,15 +126,16 @@ module Desktop
     end
 
     def verified?
-      File.exist?(File.join(prep_dir, 'state.yml')) ||
-        File.exist?(File.join(verify_dir, 'state.yml'))
+      File.exist?(File.join(global_state_dir, 'state.yml')) ||
+        File.exist?(File.join(state_dir, 'state.yml'))
     end
 
     def prepare(force: false)
       return true if !force && verified?
       puts "Preparing desktop type #{Paint[name, :cyan]}:\n\n"
-      if run_script(File.join(@dir, prepare_script), prep_dir, 'prepare')
-        File.open(File.join(prep_dir, 'state.yml'), 'w') do |io|
+      if run_script(File.join(@dir, prepare_script), 'prepare')
+        FileUtils.mkdir_p(global_state_dir)
+        File.open(File.join(global_state_dir, 'state.yml'), 'w') do |io|
           io.write({verified: true}.to_yaml)
         end
         puts <<EOF
@@ -145,7 +146,7 @@ EOF
         true
       else
         log_file = File.join(
-          prep_dir,
+          log_dir,
           "#{name}.prepare.log"
         )
         raise TypeOperationError, "Unable to prepare desktop type '#{name}'; see: #{log_file}"
@@ -158,9 +159,10 @@ EOF
       ctx = {
         missing: []
       }
-      success = run_script(File.join(@dir, verify_script), verify_dir, 'verify', ctx)
+      success = run_script(File.join(@dir, verify_script), 'verify', ctx)
       if ctx[:missing].empty? && success
-        File.open(File.join(verify_dir, 'state.yml'), 'w') do |io|
+        FileUtils.mkdir_p(state_dir)
+        File.open(File.join(state_dir, 'state.yml'), 'w') do |io|
           io.write({verified: true}.to_yaml)
         end
         puts <<EOF
@@ -304,17 +306,17 @@ EOF
 #      h['BASH_FUNC_desktop_echo()'] = "() { flight_desktop_comms DATA \"$@\"\necho \"$@\"\n}"
     end
 
-    def run_script(script, dir, op, context = {})
+    def run_script(script, op, context = {})
       if File.exists?(script)
         CommandUtils.with_clean_env do
           run_fork(context) do |wr|
             wr.close_on_exec = false
             setup_bash_funcs(ENV, wr.fileno)
             log_file = File.join(
-              dir,
+              log_dir,
               "#{name}.#{op}.log"
             )
-            FileUtils.mkdir_p(dir)
+            FileUtils.mkdir_p(log_dir)
             exec(
               {},
               '/bin/bash',
@@ -331,16 +333,25 @@ EOF
       end
     end
 
-    def prep_dir
-      @prep_dir ||= File.join(Config.root,'var','lib','desktop',name)
+    def global_state_dir
+      @global_state_dir ||= File.join(Config.global_state_path, name)
     end
 
-    def verify_dir
-      @verify_dir ||=
+    def log_dir
+      @log_dir ||=
         if Process.euid == 0
-          prep_dir
+          Config.global_log_path
         else
-          File.join(Config.user_verify_path, name)
+          Config.user_log_path
+        end
+    end
+
+    def state_dir
+      @state_dir ||=
+        if Process.euid == 0
+          global_state_dir
+        else
+          File.join(Config.user_state_path, name)
         end
     end
   end
