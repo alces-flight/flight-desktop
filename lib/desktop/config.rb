@@ -90,7 +90,7 @@ module Desktop
       end
 
       def user_log_path
-        @user_log_path ||= File.join(xdg_data.home, DESKTOP_DIR_SUFFIX, 'log')
+        @user_log_path ||= File.join(xdg_cache.home, DESKTOP_DIR_SUFFIX, 'log')
       end
 
       def global_state_path
