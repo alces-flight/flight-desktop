@@ -106,7 +106,7 @@ module Desktop
       def global_log_path
         @global_log_path ||= File.expand_path(
           data.fetch(
-            :global_state_path,
+            :global_log_path,
             default: 'var/log/desktop'
           ),
           Config.root
