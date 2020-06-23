@@ -252,10 +252,15 @@ module Desktop
           h['flight_DESKTOP_root'] = Config.root
           h['flight_DESKTOP_type_root'] = type.dir
           h['flight_DESKTOP_bg_image'] = File.expand_path(
-            Config.bg_image || 'etc/assets/backgrounds/default.jpg',
+            Config.bg_image,
             Config.root
           )
           h['flight_DESKTOP_geometry'] = Config.geometry
+          if Config.session_env_override
+            h['USER'] = ENV['USER']
+            h['HOME'] = ENV['HOME']
+            h['PATH'] = Config.session_env_path
+          end
         end,
         [
           Config.vnc_server_program,
@@ -265,7 +270,10 @@ module Desktop
           '-vncpasswd', File.join(dir, 'password.dat'),
           '-exedir', '/usr/bin',
           '-geometry', geometry,
-          :err=>[:child, :out]
+          {
+            err: [:child, :out],
+            unsetenv_others: Config.session_env_override
+          }
         ]
       ) do |io|
         yaml_content = ""

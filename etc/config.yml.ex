@@ -27,3 +27,8 @@
 #vnc_passwd_program: /usr/bin/vncpasswd
 # Program to use to launch VNC sessions
 #vnc_server_program: libexec/vncserver
+# Whether the environment should be blanked when starting a desktop
+# session.
+#session_env_override: true
+# The PATH to set when blanking the environment for a desktop session
+#session_env_path: /usr/bin:/usr/sbin

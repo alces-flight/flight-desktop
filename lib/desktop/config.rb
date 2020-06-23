@@ -201,7 +201,36 @@ module Desktop
       end
 
       def bg_image
-        data.fetch(:bg_image)
+        @bg_image ||=
+          user_data.fetch(
+            :bg_image,
+            default: data.fetch(
+              :bg_image,
+              default: 'etc/assets/backgrounds/default.jpg'
+            )
+          )
+      end
+
+      def session_env_path
+        @session_env_path ||=
+          user_data.fetch(
+            :session_env_path,
+            default: data.fetch(
+              :session_env_path,
+              default: '/usr/bin:/usr/sbin'
+            )
+          )
+      end
+
+      def session_env_override
+        @session_env_override ||=
+          user_data.fetch(
+            :session_env_override,
+            default: data.fetch(
+              :session_env_override,
+              default: true
+            )
+          )
       end
 
       private
