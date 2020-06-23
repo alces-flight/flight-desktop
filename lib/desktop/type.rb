@@ -102,6 +102,7 @@ module Desktop
     attr_reader :default
     attr_reader :arch
     attr_reader :hidden
+    attr_reader :dir
 
     def initialize(md, dir)
       @name = md[:name]

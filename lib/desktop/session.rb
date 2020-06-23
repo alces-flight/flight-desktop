@@ -250,9 +250,11 @@ module Desktop
       IO.popen(
         {}.tap do |h|
           h['flight_DESKTOP_root'] = Config.root
-          if bg_image = Config.bg_image
-            h['flight_DESKTOP_bg_image'] = File.expand_path(bg_image, Config.root)
-          end
+          h['flight_DESKTOP_type_root'] = type.dir
+          h['flight_DESKTOP_bg_image'] = File.expand_path(
+            Config.bg_image || 'etc/assets/backgrounds/default.jpg',
+            Config.root
+          )
           h['flight_DESKTOP_geometry'] = Config.geometry
         end,
         [
