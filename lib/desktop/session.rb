@@ -259,6 +259,7 @@ module Desktop
           if Config.session_env_override
             h['USER'] = ENV['USER']
             h['HOME'] = ENV['HOME']
+            h['LANG'] = ENV['LANG']
             h['PATH'] = Config.session_env_path
           end
         end,
