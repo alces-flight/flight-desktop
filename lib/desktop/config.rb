@@ -217,7 +217,7 @@ module Desktop
             :session_env_path,
             default: data.fetch(
               :session_env_path,
-              default: '/usr/bin:/usr/sbin'
+              default: '/usr/bin:/usr/sbin:/bin:/sbin'
             )
           )
       end
