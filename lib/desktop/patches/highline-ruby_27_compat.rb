@@ -1,4 +1,3 @@
-#!/bin/bash
 # =============================================================================
 # Copyright (C) 2019-present Alces Flight Ltd.
 #
@@ -25,45 +24,21 @@
 # For more information on Flight Desktop, please visit:
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
-set -e
+# Ensure HighLine doesn't output deprecation warnings for Ruby 2.7
+class HighLine
+  def say(statement)
+    statement = format_statement(statement)
+    return unless statement.length > 0
 
-contains() {
-  local e match="$1"
-  shift
-  for e; do [[ "$e" == "$match" ]] && return 0; done
-  return 1
-}
+    out = (indentation+statement).encode(Encoding.default_external, :undef => :replace)
 
-IFS=$'\n' groups=(
-  $(
-    yum grouplist hidden | \
-      sed '/^Installed Groups:/,$!d;/^Available Groups:/,$d;/^Installed Groups:/d;s/^[[:space:]]*//'
-  )
-)
-
-if ! contains 'X Window System' "${groups[@]}"; then
-  desktop_stage "Installing package group: X Window System"
-  yum -y groupinstall 'X Window System'
-fi
-
-if ! contains 'Fonts' "${groups[@]}"; then
-  desktop_stage "Installing package group: Fonts"
-  yum -y groupinstall 'Fonts'
-fi
-
-if ! contains 'KDE' "${groups[@]}"; then
-  desktop_stage "Installing package group: KDE"
-  yum -y groupinstall 'KDE'
-fi
-
-if ! rpm -qa evince | grep -q evince; then
-  desktop_stage "Installing package: evince"
-  yum -y install evince
-fi
-
-if ! rpm -qa firefox | grep -q firefox; then
-  desktop_stage "Installing package: firefox"
-  yum -y install firefox
-fi
-
-desktop_stage "Prequisites met"
+    # Don't add a newline if statement ends with whitespace, OR
+    # if statement ends with whitespace before a color escape code.
+    if /[ \t](\e\[\d+(;\d+)*m)?\Z/ =~ statement
+      @output.print(out)
+      @output.flush
+    else
+      @output.puts(out)
+    end
+  end
+end

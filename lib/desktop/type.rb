@@ -35,6 +35,18 @@ require_relative 'patches/unicode-display_width'
 
 module Desktop
   class Type
+    FUNC_DELIMITER = begin
+                       major, minor, patch =
+                                     IO.popen("/bin/bash -c 'echo $BASH_VERSION'")
+                                       .read.split('.')[0..2]
+                                       .map(&:to_i)
+                       (
+                         major > 4 ||
+                         major == 4 && minor > 3 ||
+                         major == 4 && minor == 3 && patch >= 27
+                       ) ? '%%' : '()'
+                     end
+
     class << self
       def each(&block)
         all.values.each(&block)
@@ -53,7 +65,7 @@ module Desktop
           begin
             {}.tap do |h|
               Config.type_paths.each do |p|
-                Dir[File.join(p,'*')].sort.each do |d|
+                Dir[File.join(p,'*'),File.join(p,'.[a-z]*')].sort.each do |d|
                   begin
                     md = YAML.load_file(File.join(d,'metadata.yml'))
                     t = Type.new(md, d)
@@ -89,6 +101,8 @@ module Desktop
     attr_reader :url
     attr_reader :default
     attr_reader :arch
+    attr_reader :hidden
+    attr_reader :dir
 
     def initialize(md, dir)
       @name = md[:name]
@@ -97,6 +111,7 @@ module Desktop
       @default = md[:default]
       @dir = dir
       @arch = md[:arch] || []
+      @hidden = (File.basename(dir)[0] == '.' || md[:hidden] || false)
     end
 
     def session_script
@@ -112,15 +127,16 @@ module Desktop
     end
 
     def verified?
-      File.exist?(File.join(prep_dir, 'state.yml')) ||
-        File.exist?(File.join(verify_dir, 'state.yml'))
+      File.exist?(File.join(global_state_dir, 'state.yml')) ||
+        File.exist?(File.join(state_dir, 'state.yml'))
     end
 
     def prepare(force: false)
       return true if !force && verified?
       puts "Preparing desktop type #{Paint[name, :cyan]}:\n\n"
-      if run_script(File.join(@dir, 'prepare.sh'), prep_dir, 'prepare')
-        File.open(File.join(prep_dir, 'state.yml'), 'w') do |io|
+      if run_script(File.join(@dir, prepare_script), 'prepare')
+        FileUtils.mkdir_p(global_state_dir)
+        File.open(File.join(global_state_dir, 'state.yml'), 'w') do |io|
           io.write({verified: true}.to_yaml)
         end
         puts <<EOF
@@ -131,7 +147,7 @@ EOF
         true
       else
         log_file = File.join(
-          prep_dir,
+          log_dir,
           "#{name}.prepare.log"
         )
         raise TypeOperationError, "Unable to prepare desktop type '#{name}'; see: #{log_file}"
@@ -144,9 +160,10 @@ EOF
       ctx = {
         missing: []
       }
-      success = run_script(File.join(@dir, 'verify.sh'), verify_dir, 'verify', ctx)
+      success = run_script(File.join(@dir, verify_script), 'verify', ctx)
       if ctx[:missing].empty? && success
-        File.open(File.join(verify_dir, 'state.yml'), 'w') do |io|
+        FileUtils.mkdir_p(state_dir)
+        File.open(File.join(state_dir, 'state.yml'), 'w') do |io|
           io.write({verified: true}.to_yaml)
         end
         puts <<EOF
@@ -188,6 +205,34 @@ EOF
     end
 
     private
+    def distro
+      if File.exists?('/etc/redhat-release')
+        'rhel'
+      elsif File.exists?('/etc/debian_version')
+        'debian'
+      end
+    end
+
+    def verify_script
+      @verify_script ||=
+        case distro
+        when 'rhel'
+          'verify.sh'
+        else
+          "verify.#{distro}.sh"
+        end
+    end
+
+    def prepare_script
+      @prepare_script ||=
+        case distro
+        when 'rhel'
+          'prepare.sh'
+        else
+          "prepare.#{distro}.sh"
+        end
+    end
+
     def run_fork(context = {}, &block)
       Signal.trap('INT','IGNORE')
       rd, wr = IO.pipe
@@ -245,7 +290,7 @@ EOF
     end
 
     def setup_bash_funcs(h, fileno)
-      h['BASH_FUNC_flight_desktop_comms()'] = <<EOF
+      h["BASH_FUNC_flight_desktop_comms#{FUNC_DELIMITER}"] = <<EOF
 () { local msg=$1
  shift
  if [ "$1" ]; then
@@ -255,24 +300,24 @@ EOF
  fi
 }
 EOF
-      h['BASH_FUNC_desktop_err()'] = "() { flight_desktop_comms ERR \"$@\"\n}"
-      h['BASH_FUNC_desktop_stage()'] = "() { flight_desktop_comms STAGE \"$@\"\n}"
-      h['BASH_FUNC_desktop_miss()'] = "() { flight_desktop_comms MISS \"$@\"\n}"
+      h["BASH_FUNC_desktop_err#{FUNC_DELIMITER}"] = "() { flight_desktop_comms ERR \"$@\"\n}"
+      h["BASH_FUNC_desktop_stage#{FUNC_DELIMITER}"] = "() { flight_desktop_comms STAGE \"$@\"\n}"
+      h["BASH_FUNC_desktop_miss#{FUNC_DELIMITER}"] = "() { flight_desktop_comms MISS \"$@\"\n}"
 #      h['BASH_FUNC_desktop_cat()'] = "() { flight_desktop_comms\n}"
 #      h['BASH_FUNC_desktop_echo()'] = "() { flight_desktop_comms DATA \"$@\"\necho \"$@\"\n}"
     end
 
-    def run_script(script, dir, op, context = {})
+    def run_script(script, op, context = {})
       if File.exists?(script)
         CommandUtils.with_clean_env do
           run_fork(context) do |wr|
             wr.close_on_exec = false
             setup_bash_funcs(ENV, wr.fileno)
             log_file = File.join(
-              dir,
+              log_dir,
               "#{name}.#{op}.log"
             )
-            FileUtils.mkdir_p(dir)
+            FileUtils.mkdir_p(log_dir)
             exec(
               {},
               '/bin/bash',
@@ -285,20 +330,29 @@ EOF
           end
         end
       else
-        raise IncompleteTypeError, "no preparation script provided for type: #{name}"
+        raise IncompleteTypeError, "no #{op} script provided for type: #{name}"
       end
     end
 
-    def prep_dir
-      @prep_dir ||= File.join(Config.root,'var','lib','desktop',name)
+    def global_state_dir
+      @global_state_dir ||= File.join(Config.global_state_path, name)
     end
 
-    def verify_dir
-      @verify_dir ||=
+    def log_dir
+      @log_dir ||=
         if Process.euid == 0
-          prep_dir
+          Config.global_log_path
         else
-          File.join(Config.user_verify_path, name)
+          Config.user_log_path
+        end
+    end
+
+    def state_dir
+      @state_dir ||=
+        if Process.euid == 0
+          global_state_dir
+        else
+          File.join(Config.user_state_path, name)
         end
     end
   end

@@ -44,7 +44,7 @@ installed and the environment activated with the `flight start` command.
  * Enable the Alces Flight RPM repository:
 
     ```
-    yum install https://alces-flight.s3-eu-west-1.amazonaws.com/repos/alces-flight/x86_64/alces-flight-release-1-1.noarch.rpm
+    yum install https://repo.openflighthpc.org/openflight/centos/7/x86_64/openflighthpc-release-2-1.noarch.rpm
     ```
 
  * Rebuild your `yum` cache:

@@ -43,4 +43,6 @@ for a in $SESSION_PIDS; do
   kill $a
 done
 
-rm -rf $SESSION_DIR
+if [ -z "$flight_DESKTOP_debug" ]; then
+  rm -rf $SESSION_DIR
+fi

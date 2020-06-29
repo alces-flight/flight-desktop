@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# Copyright (C) 2019-present Alces Flight Ltd.
+# Copyright (C) 2020-present Alces Flight Ltd.
 #
 # This file is part of Flight Desktop.
 #
@@ -25,28 +25,20 @@
 # For more information on Flight Desktop, please visit:
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
-# 'Xterm*vt100.pointerMode: 0' is to ensure that the pointer does not
-# disappear when a user types into the xterm.  In this situation, some
-# VNC clients experience a 'freeze' due to a bug with handling
-# invisible mouse pointers (e.g. OSX Screen Sharing).
-echo 'XTerm*vt100.pointerMode: 0' | xrdb -merge
-vncconfig -nowin &
-
-startkde &
-kdepid=$!
-bg_image="${flight_DESKTOP_bg_image:-${flight_DESKTOP_root}/etc/assets/backgrounds/default.jpg}"
-if [ -f "${bg_image}" ]; then
-  while [ ! -f ~/.kde/share/config/plasma-desktop-appletsrc ]; do
-    sleep 1
-  done
-  echo "Sleeping [1/3]..."
-  sleep 5
-  python "${flight_DESKTOP_root}"/etc/types/kde/set_kde_wallpaper.py "$bg_image" "$HOME"
-  echo "Sleeping [2/3]..."
-  sleep 2
-  kquitapp plasma-desktop
-  echo "Sleeping [3/3]..."
-  sleep 2
-  kstart plasma-desktop
+desktop_stage "Flight Desktop prerequisites"
+if ! apt -qq --installed list tigervnc-common | grep -q tigervnc-common; then
+  desktop_miss 'Package: tigervnc-common'
 fi
-wait $kdepid
+if ! apt -qq --installed list xauth | grep -q xauth; then
+  desktop_miss 'Package: xauth'
+fi
+
+desktop_stage "Package: x11-xserver-utils"
+if ! apt -qq --installed list x11-xserver-utils | grep -q x11-xserver-utils; then
+  desktop_miss 'Package: x11-xserver-utils'
+fi
+
+desktop_stage "Package: xterm"
+if ! apt -qq --installed list xterm | grep -q xterm; then
+  desktop_miss 'Package: xterm'
+fi

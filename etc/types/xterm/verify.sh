@@ -25,6 +25,14 @@
 # For more information on Flight Desktop, please visit:
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
+desktop_stage "Flight Desktop prerequisites"
+if ! rpm -qa tigervnc-server-minimal | grep -q tigervnc-server-minimal; then
+  desktop_miss 'Package: tigervnc-server-minimal'
+fi
+if ! rpm -qa xorg-x11-xauth | grep -q xorg-x11-xauth; then
+  desktop_miss 'Package: xorg-x11-xauth'
+fi
+
 desktop_stage "Package: xorg-x11-server-utils"
 if ! rpm -qa xorg-x11-server-utils | grep -q xorg-x11-server-utils; then
   desktop_miss 'Package: xorg-x11-server-utils'

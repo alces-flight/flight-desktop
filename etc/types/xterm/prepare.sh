@@ -27,6 +27,12 @@
 # ==============================================================================
 set -e
 
+if ! rpm -qa tigervnc-server-minimal | grep -q tigervnc-server-minimal ||
+   ! rpm -qa xorg-x11-xauth | grep -q xorg-x11-xauth; then
+  desktop_stage "Installing Flight Desktop prerequisites"
+  yum -y install tigervnc-server-minimal xorg-x11-xauth
+fi
+
 if ! rpm -qa xorg-x11-server-utils | grep -q xorg-x11-server-utils; then
   desktop_stage "Installing package: xorg-x11-server-utils"
   yum -y install xorg-x11-server-utils

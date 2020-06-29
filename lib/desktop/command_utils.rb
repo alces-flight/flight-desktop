@@ -25,9 +25,19 @@
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
 require_relative 'network_utils'
+require 'timeout'
 
 module Desktop
   module CommandUtils
+    ENV_BLACKLIST = %w(
+      flight_COMMAND_ROOT
+      flight_MODE
+      flight_NAME
+      FLIGHT_PROGRAM_NAME
+      FLIGHT_CWD
+      SSL_CERT_FILE
+    )
+
     class << self
       def command(cmd)
         Paint%[
@@ -212,7 +222,13 @@ EOF
 
       def generate_password
         if File.executable?('/usr/bin/apg')
-          `/usr/bin/apg -n1 -M Ncl -m 8 -x 8`.chomp
+          begin
+            Timeout.timeout(5) do
+              `/usr/bin/apg -n1 -M Ncl -m 8 -x 8`.chomp
+            end
+          rescue Timeout::Error
+            SecureRandom.urlsafe_base64[0..7].tr('-_','fl')
+          end
         else
           SecureRandom.urlsafe_base64[0..7].tr('-_','fl')
         end
@@ -224,6 +240,18 @@ EOF
         else
           msg = Bundler.respond_to?(:with_unbundled_env) ? :with_unbundled_env : :with_clean_env
           Bundler.__send__(msg) { block.call }
+        end
+      end
+
+      def with_cleanest_env(&block)
+        with_clean_env do
+          original_env = ENV.clone
+          ENV_BLACKLIST.each {|k| original_env.delete(k)}
+          begin
+            block.call
+          ensure
+            ENV.clear.replace(original_env)
+          end
         end
       end
     end

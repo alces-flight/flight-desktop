@@ -165,14 +165,17 @@ module Desktop
     end
 
     def start(geometry: Config.geometry)
-      CommandUtils.with_clean_env do
-        create_password_file
-        install_session_script
-        start_vnc_server(geometry: geometry) &&
-          start_websocket_server &&
-          start_grabber &&
-          start_cleaner &&
-          save
+      h = (Dir.home rescue '/')
+      Dir.chdir(h) do
+        CommandUtils.with_cleanest_env do
+          create_password_file
+          install_session_script
+          start_vnc_server(geometry: geometry) &&
+            start_websocket_server &&
+            start_grabber &&
+            start_cleaner &&
+            save
+        end
       end
     end
 
@@ -247,8 +250,17 @@ module Desktop
       IO.popen(
         {}.tap do |h|
           h['flight_DESKTOP_root'] = Config.root
-          if bg_image = Config.bg_image
-            h['flight_DESKTOP_bg_image'] = File.expand_path(bg_image, Config.root)
+          h['flight_DESKTOP_type_root'] = type.dir
+          h['flight_DESKTOP_bg_image'] = File.expand_path(
+            Config.bg_image,
+            Config.root
+          )
+          h['flight_DESKTOP_geometry'] = geometry
+          if Config.session_env_override
+            h['USER'] = ENV['USER']
+            h['HOME'] = ENV['HOME']
+            h['LANG'] = ENV['LANG']
+            h['PATH'] = Config.session_env_path
           end
         end,
         [
@@ -259,7 +271,10 @@ module Desktop
           '-vncpasswd', File.join(dir, 'password.dat'),
           '-exedir', '/usr/bin',
           '-geometry', geometry,
-          :err=>[:child, :out]
+          {
+            err: [:child, :out],
+            unsetenv_others: Config.session_env_override
+          }
         ]
       ) do |io|
         yaml_content = ""

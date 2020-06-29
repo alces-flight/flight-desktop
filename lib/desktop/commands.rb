@@ -26,6 +26,7 @@
 # ==============================================================================
 require_relative 'commands/avail'
 require_relative 'commands/clean'
+require_relative 'commands/doctor'
 require_relative 'commands/kill'
 require_relative 'commands/list'
 require_relative 'commands/prepare'

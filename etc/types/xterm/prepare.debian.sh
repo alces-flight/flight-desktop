@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# Copyright (C) 2019-present Alces Flight Ltd.
+# Copyright (C) 2020-present Alces Flight Ltd.
 #
 # This file is part of Flight Desktop.
 #
@@ -27,22 +27,20 @@
 # ==============================================================================
 set -e
 
-if ! yum --enablerepo=google-chrome repolist | grep -q ^google-chrome; then
-  desktop_stage "Enabling repository: Google Chrome"
-  cat <<\EOF > /etc/yum.repos.d/google-chrome.repo
-[google-chrome]
-name=google-chrome
-baseurl=http://dl.google.com/linux/chrome/rpm/stable/$basearch
-enabled=1
-gpgcheck=1
-gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub
-EOF
-  yum makecache
+if ! apt -qq --installed list tigervnc-common | grep -q tigervnc-common ||
+    ! apt -qq --installed list xauth | grep -q xauth; then
+  desktop_stage "Installing Flight Desktop prerequisites"
+  apt -y install tigervnc-common xauth
 fi
 
-if ! rpm -qa google-chrome-stable | grep -q google-chrome-stable; then
-  desktop_stage "Installing package: google-chrome-stable"
-  yum -y install google-chrome-stable
+if ! apt -qq --installed list x11-xserver-utils | grep -q x11-xserver-utils; then
+  desktop_stage "Installing package: x11-xserver-utils"
+  apt -y install x11-xserver-utils
+fi
+
+if ! apt -qq --installed list xterm | grep -q xterm; then
+  desktop_stage "Installing package: xterm"
+  apt -y install xterm
 fi
 
 desktop_stage "Prequisites met"
