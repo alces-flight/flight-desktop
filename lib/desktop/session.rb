@@ -255,7 +255,7 @@ module Desktop
             Config.bg_image,
             Config.root
           )
-          h['flight_DESKTOP_geometry'] = Config.geometry
+          h['flight_DESKTOP_geometry'] = geometry
           if Config.session_env_override
             h['USER'] = ENV['USER']
             h['HOME'] = ENV['HOME']
