@@ -190,7 +190,7 @@ module Desktop
             {},
             '/usr/bin/websockify',
             "0.0.0.0:#{websocket_port}",
-            "#{ip}:#{port}",
+            "127.0.0.1:#{port}",
             [:out, :err] => [log_file ,'w']
           )
         }
