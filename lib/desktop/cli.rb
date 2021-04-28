@@ -128,7 +128,7 @@ the host name and IP address that may be used to access the session,
 the X11 display number, the VNC port number, and the password required
 to access the session.
 
-The DESKTOP parameter should be either specify the session identity or
+The DESKTOP parameter should either specify the session identity or
 a display number prefixed with ':', e.g. ':1'.
 EOF
     end
@@ -155,7 +155,7 @@ EOF
       c.description = <<EOF
 Instruct an active interactive desktop session to terminate.
 
-The DESKTOP parameter should be either specify the session identity or
+The DESKTOP parameter should either specify the session identity or
 a display number prefixed with ':', e.g. ':1'.
 EOF
     end
@@ -188,6 +188,20 @@ EOF
     end
     alias_command :s, :start
     alias_command :st, :start
+
+    command :webify do |c|
+      cli_syntax(c, 'DESKTOP')
+      c.summary = 'Start web access support for an active desktop session'
+      c.action Commands, :webify
+      c.description = <<EOF
+Start required and optional web support programs for an active interactive
+desktop session.
+
+The DESKTOP parameter should either specify the session identity or
+a display number prefixed with ':', e.g. ':1'.
+EOF
+    end
+    alias_command :web, :webify
 
     command :set do |c|
       cli_syntax(c, '[NAME=VALUE...]')

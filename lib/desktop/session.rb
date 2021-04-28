@@ -129,10 +129,6 @@ module Desktop
       (@metadata[:display] || 0).to_i + 5900
     end
 
-    def websocket_port
-      @websocket_port ||= allocate_websocket_port
-    end
-
     def password
       @password ||= CommandUtils.generate_password
     end
@@ -157,7 +153,6 @@ module Desktop
             puts lines.inspect
           end
         end
-        rc = $?
         $?.success?.tap do |s|
           clean if s && ENV['flight_DESKTOP_debug'].nil?
         end
@@ -170,44 +165,64 @@ module Desktop
         CommandUtils.with_cleanest_env do
           create_password_file
           install_session_script
-          start_vnc_server(geometry: geometry) &&
-            start_websocket_server &&
-            start_grabber &&
-            start_cleaner &&
-            save
+          start_vnc_server(geometry: geometry).tap do |started|
+            if started
+              start_websocket_server
+              start_grabber
+              start_cleaner
+              save
+            end
+          end
+        end
+      end
+    end
+
+    def start_web_support_services
+      h = (Dir.home rescue '/')
+      Dir.chdir(h) do
+        CommandUtils.with_cleanest_env do
+          start_websocket_server.tap do |started|
+            if started
+              start_grabber
+              start_cleaner
+              save
+            end
+          end
         end
       end
     end
 
     def start_websocket_server
-      if File.executable?('/usr/bin/websockify') && websocket_port > 0
-        pid = fork {
-          log_file = File.join(
-            dir,
-            "websocket.log"
-          )
-          exec(
-            {},
-            '/usr/bin/websockify',
-            "0.0.0.0:#{websocket_port}",
-            "127.0.0.1:#{port}",
-            [:out, :err] => [log_file ,'w']
-          )
-        }
-        Process.detach(pid)
-        @websocket_pid = pid
-      else
+      return true if !@websocket_pid.nil?
+
+      unless File.executable?('/usr/bin/websockify')
         @websocket_port = 0
+        return false
       end
+
+      @websocket_port = allocate_websocket_port
+      return false if @websocket_port == 0
+
+      pid = fork {
+        log_file = File.join(
+          dir,
+          "websocket.log"
+        )
+        exec(
+          {},
+          '/usr/bin/websockify',
+          "0.0.0.0:#{@websocket_port}",
+          "127.0.0.1:#{port}",
+          [:out, :err] => [log_file ,'w']
+        )
+      }
+      Process.detach(pid)
+      @websocket_pid = pid
       true
     end
 
     def start_cleaner
       pid = fork {
-        log_file = File.join(
-          dir,
-          "cleaner.log"
-        )
         exec(
           {
             'SESSION_VNC_PID' => File.read(pidfile).chomp,
@@ -242,8 +257,10 @@ module Desktop
         }
         Process.detach(pid)
         @grabber_pid = pid
+        true
+      else
+        false
       end
-      true
     end
 
     def start_vnc_server(geometry: Config.geometry)
@@ -343,7 +360,6 @@ module Desktop
         type: @type.name,
         password: password,
         ip: ip,
-        websocket_port: websocket_port,
         host_name: host_name,
       }.tap do |md|
         if websocket_port != 0

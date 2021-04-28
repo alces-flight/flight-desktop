@@ -34,6 +34,7 @@ require_relative 'commands/set'
 require_relative 'commands/show'
 require_relative 'commands/start'
 require_relative 'commands/verify'
+require_relative 'commands/webify'
 
 module Desktop
   module Commands
