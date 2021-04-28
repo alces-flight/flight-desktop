@@ -129,10 +129,6 @@ module Desktop
       (@metadata[:display] || 0).to_i + 5900
     end
 
-    def websocket_port
-      @websocket_port ||= allocate_websocket_port
-    end
-
     def password
       @password ||= CommandUtils.generate_password
     end
@@ -199,27 +195,30 @@ module Desktop
     def start_websocket_server
       return true if !@websocket_pid.nil?
 
-      if File.executable?('/usr/bin/websockify') && websocket_port > 0
-        pid = fork {
-          log_file = File.join(
-            dir,
-            "websocket.log"
-          )
-          exec(
-            {},
-            '/usr/bin/websockify',
-            "0.0.0.0:#{websocket_port}",
-            "127.0.0.1:#{port}",
-            [:out, :err] => [log_file ,'w']
-          )
-        }
-        Process.detach(pid)
-        @websocket_pid = pid
-        true
-      else
+      unless File.executable?('/usr/bin/websockify')
         @websocket_port = 0
-        false
+        return false
       end
+
+      @websocket_port = allocate_websocket_port
+      return false if @websocket_port == 0
+
+      pid = fork {
+        log_file = File.join(
+          dir,
+          "websocket.log"
+        )
+        exec(
+          {},
+          '/usr/bin/websockify',
+          "0.0.0.0:#{@websocket_port}",
+          "127.0.0.1:#{port}",
+          [:out, :err] => [log_file ,'w']
+        )
+      }
+      Process.detach(pid)
+      @websocket_pid = pid
+      true
     end
 
     def start_cleaner
@@ -361,7 +360,6 @@ module Desktop
         type: @type.name,
         password: password,
         ip: ip,
-        websocket_port: websocket_port,
         host_name: host_name,
       }.tap do |md|
         if websocket_port != 0
