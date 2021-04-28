@@ -157,7 +157,6 @@ module Desktop
             puts lines.inspect
           end
         end
-        rc = $?
         $?.success?.tap do |s|
           clean if s && ENV['flight_DESKTOP_debug'].nil?
         end
@@ -170,16 +169,36 @@ module Desktop
         CommandUtils.with_cleanest_env do
           create_password_file
           install_session_script
-          start_vnc_server(geometry: geometry) &&
-            start_websocket_server &&
-            start_grabber &&
-            start_cleaner &&
-            save
+          start_vnc_server(geometry: geometry).tap do |started|
+            if started
+              start_websocket_server
+              start_grabber
+              start_cleaner
+              save
+            end
+          end
+        end
+      end
+    end
+
+    def start_web_support_services
+      h = (Dir.home rescue '/')
+      Dir.chdir(h) do
+        CommandUtils.with_cleanest_env do
+          start_websocket_server.tap do |started|
+            if started
+              start_grabber
+              start_cleaner
+              save
+            end
+          end
         end
       end
     end
 
     def start_websocket_server
+      return true if !@websocket_pid.nil?
+
       if File.executable?('/usr/bin/websockify') && websocket_port > 0
         pid = fork {
           log_file = File.join(
@@ -196,18 +215,15 @@ module Desktop
         }
         Process.detach(pid)
         @websocket_pid = pid
+        true
       else
         @websocket_port = 0
+        false
       end
-      true
     end
 
     def start_cleaner
       pid = fork {
-        log_file = File.join(
-          dir,
-          "cleaner.log"
-        )
         exec(
           {
             'SESSION_VNC_PID' => File.read(pidfile).chomp,
@@ -242,8 +258,10 @@ module Desktop
         }
         Process.detach(pid)
         @grabber_pid = pid
+        true
+      else
+        false
       end
-      true
     end
 
     def start_vnc_server(geometry: Config.geometry)
