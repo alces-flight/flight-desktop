@@ -173,6 +173,7 @@ Desktop type #{Paint[name, :cyan]} has been verified.
 EOF
         true
       else
+        FileUtils.rm_rf File.join(state_dir, 'state.yml')
         puts <<EOF
 
 Desktop type #{Paint[name, :cyan]} has missing prerequisites:
