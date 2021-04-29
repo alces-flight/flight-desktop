@@ -126,9 +126,20 @@ module Desktop
       end
     end
 
+    # NOTE: As there are two states dirs, it may lead to conflicts between the two
+    #       if a package is un-installed. The user's 'state_file' is used as the
+    #       definitive source as its possible for them to run `verify --force` if
+    #       the app gets into an odd state.
+    #
+    #      Whilst this isn't ideal, it should be good enough
     def verified?
-      File.exist?(File.join(global_state_dir, 'state.yml')) ||
-        File.exist?(File.join(state_dir, 'state.yml'))
+      paths = [
+        File.join(state_dir, 'state.yml'),
+        File.join(global_state_dir, 'state.yml')
+      ]
+      path = paths.find { |p| File.exists?(p) }
+      return false unless path
+      (YAML.load(File.read(path) || {}).to_h[:verified]) ? true : false
     end
 
     def prepare(force: false)
