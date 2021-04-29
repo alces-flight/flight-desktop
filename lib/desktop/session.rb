@@ -78,7 +78,7 @@ module Desktop
       end
     end
 
-    attr_reader :uuid, :type, :metadata, :host_name, :state, :websocket_port, :created_at
+    attr_reader :uuid, :type, :metadata, :host_name, :state, :websocket_port, :created_at, :last_accessed_at
 
     def initialize(uuid: nil, type: nil)
       if uuid.nil?
@@ -354,8 +354,14 @@ module Desktop
       @websocket_pid = metadata[:websocket_pid]
       @host_name = metadata[:host_name]
       @state = active? ? :active : :exited
+      @last_accessed_at = if File.exists?File.join(dir, 'session.log')
+                            File.ctime File.join(dir, 'session.log')
+                          end
       @created_at = if metadata[:created_at]
                       Time.parse(metadata[:created_at])
+                    elsif last_accessed_at
+                      # Ensure that 'created_at' is not after 'last_accessed_at'
+                      last_accessed_at
                     else
                       # Fallback to determining the created_at from the metadata ctime
                       File.ctime(metadata_file)
