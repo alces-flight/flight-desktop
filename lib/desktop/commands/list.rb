@@ -59,7 +59,9 @@ module Desktop
                   s.port,
                   s.websocket_port,
                   s.password,
-                  s.local? ? (s.active? ? 'Active' : 'Exited') : 'Remote'
+                  s.local? ? (s.active? ? 'Active' : 'Exited') : 'Remote',
+                  s.created_at.strftime("%Y-%m-%dT%T%z"),
+                  s.last_accessed_at.strftime("%Y-%m-%dT%T%z")
                 ]
               end
             puts a.join("\t")
