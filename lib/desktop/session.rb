@@ -27,6 +27,7 @@
 require_relative 'config'
 require_relative 'network_utils'
 require_relative 'command_utils'
+require 'time'
 require 'securerandom'
 require 'fileutils'
 require 'sys/proctable'
@@ -77,7 +78,7 @@ module Desktop
       end
     end
 
-    attr_reader :uuid, :type, :metadata, :host_name, :state, :websocket_port
+    attr_reader :uuid, :type, :metadata, :host_name, :state, :websocket_port, :created_at
 
     def initialize(uuid: nil, type: nil)
       if uuid.nil?
@@ -86,6 +87,7 @@ module Desktop
         @metadata = {}
         @host_name = Socket.gethostname.split('.')[0]
         @state = :new
+        @created_at = Time.now
       else
         @uuid = uuid
         begin
@@ -352,6 +354,12 @@ module Desktop
       @websocket_pid = metadata[:websocket_pid]
       @host_name = metadata[:host_name]
       @state = active? ? :active : :exited
+      @created_at = if metadata[:created_at]
+                      Time.parse(metadata[:created_at])
+                    else
+                      # Fallback to determining the created_at from the metadata ctime
+                      File.ctime(metadata_file)
+                    end
     end
 
     def save
@@ -361,6 +369,7 @@ module Desktop
         password: password,
         ip: ip,
         host_name: host_name,
+        created_at: created_at.strftime("%Y-%m-%dT%T%z")
       }.tap do |md|
         if websocket_port != 0
           md[:websocket_port] = websocket_port
