@@ -172,8 +172,8 @@ EOF
         missing: []
       }
       success = run_script(File.join(@dir, verify_script), 'verify', ctx)
+      FileUtils.mkdir_p(state_dir)
       if ctx[:missing].empty? && success
-        FileUtils.mkdir_p(state_dir)
         File.open(File.join(state_dir, 'state.yml'), 'w') do |io|
           io.write({verified: true}.to_yaml)
         end
@@ -184,6 +184,9 @@ Desktop type #{Paint[name, :cyan]} has been verified.
 EOF
         true
       else
+        File.open(File.join(state_dir, 'state.yml'), 'w') do |io|
+          io.write({verified: false}.to_yaml)
+        end
         puts <<EOF
 
 Desktop type #{Paint[name, :cyan]} has missing prerequisites:
