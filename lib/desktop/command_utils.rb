@@ -104,6 +104,7 @@ EOF
           puts "Web Socket Port\t#{session.websocket_port}"
           puts "Created At\t#{session.created_at.strftime("%Y-%m-%dT%T%z")}"
           puts "Last Accessed At\t#{session.last_accessed_at.strftime("%Y-%m-%dT%T%z")}"
+          puts "Screenshot Path\t#{File.join(session.dir, 'session.png')}"
         end
       end
 

@@ -61,7 +61,8 @@ module Desktop
                   s.password,
                   s.local? ? (s.active? ? 'Active' : 'Exited') : 'Remote',
                   s.created_at.strftime("%Y-%m-%dT%T%z"),
-                  s.last_accessed_at.strftime("%Y-%m-%dT%T%z")
+                  s.last_accessed_at.strftime("%Y-%m-%dT%T%z"),
+                  File.join(s.dir, 'session.png')
                 ]
               end
             puts a.join("\t")
