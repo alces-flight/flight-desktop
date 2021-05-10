@@ -95,6 +95,7 @@ module Desktop
         rescue
           @metadata = {}
           @state = :broken
+          @created_at = determine_created_at
         end
       end
     end
@@ -357,15 +358,7 @@ module Desktop
       @last_accessed_at = if File.exists?File.join(dir, 'session.log')
                             File.ctime File.join(dir, 'session.log')
                           end
-      @created_at = if metadata[:created_at]
-                      Time.parse(metadata[:created_at])
-                    elsif last_accessed_at
-                      # Ensure that 'created_at' is not after 'last_accessed_at'
-                      last_accessed_at
-                    else
-                      # Fallback to determining the created_at from the metadata ctime
-                      File.ctime(metadata_file)
-                    end
+      @created_at = determine_created_at
     end
 
     def save
@@ -416,6 +409,21 @@ module Desktop
 
     def metadata_file
       @metadata_file ||= File.join(session_dir_path, 'metadata.yml')
+    end
+
+    def determine_created_at
+      # The easy case.
+      return Time.parse(metadata[:created_at]) if metadata[:created_at]
+
+      # Backwards compatibility with sessions started with older versions of
+      # `flight-desktop`.  Return the oldest sensible time that is not after
+      # `last_accessed_at`.  A best guess is sufficient.
+      dir_ctime = File.ctime(session_dir_path) if File.exist?(session_dir_path)
+      meta_ctime = File.ctime(metadata_file) if File.exist?(metadata_file)
+      [
+        [ dir_ctime, meta_ctime ].compact.max,
+        last_accessed_at,
+      ].compact.min
     end
   end
 end

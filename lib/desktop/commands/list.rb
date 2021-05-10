@@ -40,7 +40,7 @@ module Desktop
             Table.emit do |t|
               headers 'Identity', 'Type', 'Host name', 'IP address', 'Display (Port)', 'Password', 'State'
               Session.each do |s|
-                row *session_to_array.call(s)
+                row(*session_to_array.call(s))
               end
             end
           end
@@ -48,7 +48,10 @@ module Desktop
           Session.each do |s|
             a =
               if s.state == :broken
-                [s.uuid].tap {|b| b[8] = 'Broken' }
+                [s.uuid].tap do |b|
+                  b[8] = 'Broken'
+                  b[9] = s.created_at&.strftime("%Y-%m-%dT%T%z")
+                end
               else
                 [
                   s.uuid,

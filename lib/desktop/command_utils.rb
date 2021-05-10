@@ -101,7 +101,7 @@ EOF
           puts "Display\t:#{session.display}"
           puts "Password\t#{session.password}"
           puts "State\t#{session.local? ? (session.active? ? 'Active' : 'Exited') : 'Remote'}"
-          puts "Web Socket Port\t#{session.websocket_port}"
+          puts "WebSocket Port\t#{session.websocket_port}"
           puts "Created At\t#{session.created_at.strftime("%Y-%m-%dT%T%z")}"
           puts "Last Accessed At\t#{session.last_accessed_at&.strftime("%Y-%m-%dT%T%z").to_s}"
           puts "Screenshot Path\t#{File.join(session.dir, 'session.png')}"
