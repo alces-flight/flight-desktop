@@ -27,6 +27,7 @@
 require_relative 'config'
 require_relative 'network_utils'
 require_relative 'command_utils'
+require 'time'
 require 'securerandom'
 require 'fileutils'
 require 'sys/proctable'
@@ -77,7 +78,7 @@ module Desktop
       end
     end
 
-    attr_reader :uuid, :type, :metadata, :host_name, :state, :websocket_port
+    attr_reader :uuid, :type, :metadata, :host_name, :state, :websocket_port, :created_at, :last_accessed_at
 
     def initialize(uuid: nil, type: nil)
       if uuid.nil?
@@ -86,6 +87,7 @@ module Desktop
         @metadata = {}
         @host_name = Socket.gethostname.split('.')[0]
         @state = :new
+        @created_at = Time.now
       else
         @uuid = uuid
         begin
@@ -93,6 +95,7 @@ module Desktop
         rescue
           @metadata = {}
           @state = :broken
+          @created_at = determine_created_at
         end
       end
     end
@@ -352,6 +355,10 @@ module Desktop
       @websocket_pid = metadata[:websocket_pid]
       @host_name = metadata[:host_name]
       @state = active? ? :active : :exited
+      @last_accessed_at = if File.exists?File.join(dir, 'session.log')
+                            File.ctime File.join(dir, 'session.log')
+                          end
+      @created_at = determine_created_at
     end
 
     def save
@@ -361,6 +368,7 @@ module Desktop
         password: password,
         ip: ip,
         host_name: host_name,
+        created_at: created_at.strftime("%Y-%m-%dT%T%z")
       }.tap do |md|
         if websocket_port != 0
           md[:websocket_port] = websocket_port
@@ -401,6 +409,21 @@ module Desktop
 
     def metadata_file
       @metadata_file ||= File.join(session_dir_path, 'metadata.yml')
+    end
+
+    def determine_created_at
+      # The easy case.
+      return Time.parse(metadata[:created_at]) if metadata[:created_at]
+
+      # Backwards compatibility with sessions started with older versions of
+      # `flight-desktop`.  Return the oldest sensible time that is not after
+      # `last_accessed_at`.  A best guess is sufficient.
+      dir_ctime = File.ctime(session_dir_path) if File.exist?(session_dir_path)
+      meta_ctime = File.ctime(metadata_file) if File.exist?(metadata_file)
+      [
+        [ dir_ctime, meta_ctime ].compact.max,
+        last_accessed_at,
+      ].compact.min
     end
   end
 end
