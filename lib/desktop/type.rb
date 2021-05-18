@@ -127,8 +127,24 @@ module Desktop
     end
 
     def verified?
-      File.exist?(File.join(global_state_dir, 'state.yml')) ||
-        File.exist?(File.join(state_dir, 'state.yml'))
+      # Determine which state files exist
+      paths = [
+        File.join(global_state_dir, 'state.yml'),
+        File.join(state_dir, 'state.yml')
+      ].uniq.select { |p| File.exists?(p) }
+      return false if paths.empty?
+
+      # Find the last updated state file
+      path = if paths.length == 1
+               paths.first
+             elsif File.ctime(paths.first) < File.ctime(paths.last)
+               paths.last
+             else
+               paths.first
+             end
+
+      # Read the verified flag from the file
+      YAML.load(File.read(path), symbolize_names: true)[:verified]
     end
 
     def prepare(force: false)
@@ -136,9 +152,7 @@ module Desktop
       puts "Preparing desktop type #{Paint[name, :cyan]}:\n\n"
       if run_script(File.join(@dir, prepare_script), 'prepare')
         FileUtils.mkdir_p(global_state_dir)
-        File.open(File.join(global_state_dir, 'state.yml'), 'w') do |io|
-          io.write({verified: true}.to_yaml)
-        end
+        File.write(File.join(state_dir, 'state.yml'), { verified: true }.to_yaml)
         puts <<EOF
 
 Desktop type #{Paint[name, :cyan]} has been prepared.
@@ -163,9 +177,7 @@ EOF
       success = run_script(File.join(@dir, verify_script), 'verify', ctx)
       if ctx[:missing].empty? && success
         FileUtils.mkdir_p(state_dir)
-        File.open(File.join(state_dir, 'state.yml'), 'w') do |io|
-          io.write({verified: true}.to_yaml)
-        end
+        File.write(File.join(state_dir, 'state.yml'), { verified: true }.to_yaml)
         puts <<EOF
 
 Desktop type #{Paint[name, :cyan]} has been verified.
@@ -173,7 +185,7 @@ Desktop type #{Paint[name, :cyan]} has been verified.
 EOF
         true
       else
-        FileUtils.rm_rf File.join(state_dir, 'state.yml')
+        File.write(File.join(state_dir, 'state.yml'), { verified: false }.to_yaml)
         puts <<EOF
 
 Desktop type #{Paint[name, :cyan]} has missing prerequisites:
