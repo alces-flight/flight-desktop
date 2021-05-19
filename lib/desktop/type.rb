@@ -127,23 +127,13 @@ module Desktop
     end
 
     def verified?
-      # Determine which state files exist
       paths = [
         File.join(global_state_dir, 'state.yml'),
         File.join(state_dir, 'state.yml')
       ].uniq.select { |p| File.exists?(p) }
       return false if paths.empty?
 
-      # Find the last updated state file
-      path = if paths.length == 1
-               paths.first
-             elsif File.ctime(paths.first) < File.ctime(paths.last)
-               paths.last
-             else
-               paths.first
-             end
-
-      # Read the verified flag from the file
+      path = paths.sort_by { |p| File.ctime(p) }.last
       YAML.load(File.read(path), symbolize_names: true)[:verified]
     end
 
