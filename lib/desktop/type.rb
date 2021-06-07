@@ -165,8 +165,8 @@ EOF
         missing: []
       }
       success = run_script(File.join(@dir, verify_script), 'verify', ctx)
+      FileUtils.mkdir_p(state_dir)
       if ctx[:missing].empty? && success
-        FileUtils.mkdir_p(state_dir)
         File.write(File.join(state_dir, 'state.yml'), { verified: true }.to_yaml)
         puts <<EOF
 
