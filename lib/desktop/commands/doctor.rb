@@ -46,12 +46,40 @@ module Desktop
           'Image converter (stage 2)' => '/usr/bin/pnmtopng',
         },
         'Networking' => {
-          'Websocket provider' => '/usr/bin/websockify',
+          'Websocket provider' => Config.websockify_paths,
         },
         'Improved passwords' =>  {
           'Password generator' => '/usr/bin/apg',
         },
       }
+
+      class SearchResult < Struct.new(:paths)
+        def run
+          Array(self.paths).each do |p|
+            if File.executable?(p)
+              @found = p
+              break
+            end
+          end
+          self
+        end
+
+        def success
+          !!@found
+        end
+
+        # Return either the first path at which the exectuable was found or
+        # the paths searched.
+        def formatted_paths(separator=":")
+          if self.success
+            @found
+          elsif separator
+            Array(self.paths).join(separator)
+          else
+            self.paths
+          end
+        end
+      end
 
       def run
         if options.json
@@ -65,13 +93,13 @@ module Desktop
             services: (services = [])
           }
           CRITICAL_PROGS.each do |k,v|
-            success = File.executable?(v)
+            sr = SearchResult.new(v).run
             services << {
               description: k,
-              executable: v,
-              presence: success
+              executable: sr.formatted_paths(nil),
+              presence: sr.success
             }
-            critical_success &&= success
+            critical_success &&= sr.success
           end
           failures << 'Critical' unless critical_success
           all_success = critical_success
@@ -82,27 +110,26 @@ module Desktop
               services: (services = [])
             }
             h.each do |k,v|
-              success = File.executable?(v)
+              sr = SearchResult.new(v).run
               services << {
                 description: k,
-                executable: v,
-                presence: success
+                executable: sr.formatted_paths(nil),
+                presence: sr.success
               }
-              section_success &&= success
-              all_success &&= success
+              section_success &&= sr.success
+              all_success &&= sr.success
             end
             failures << s unless section_success
           end
           output[:status] = all_success ? 'good' : ( critical_success ? 'pass' : 'fail' )
           puts JSON.pretty_generate(output)
         elsif $stdout.tty?
-          summary = ""
           puts "Verifying critical dependencies:\n\n"
           critical_success = true
           CRITICAL_PROGS.each do |k,v|
-            success = File.executable?(v)
-            puts "   > #{success ? "\u2705" : "\u274c"} #{k} (#{v})"
-            critical_success &&= success
+            sr = SearchResult.new(v).run
+            puts "   > #{sr.success ? "\u2705" : "\u274c"} #{k} (#{sr.formatted_paths})"
+            critical_success &&= sr.success
           end
 
           section_summary = []
@@ -111,10 +138,9 @@ module Desktop
             section_output = ""
             section_success = true
             h.each do |k,v|
-              File.executable?(v).tap do |success|
-                section_output << "     > #{success ? "\u2705" : "\u274c"} #{k} (#{v})\n"
-                section_success &&= success
-              end
+              sr = SearchResult.new(v).run
+              puts "   > #{sr.success ? "\u2705" : "\u274c"} #{k} (#{sr.formatted_paths})"
+              section_success &&= sr.success
             end
             if !section_success
               section_summary << " * #{Paint["OPTIONAL",:bright,:yellow]} - #{s} dependencies are not satisfied."
@@ -137,14 +163,13 @@ EOF
           puts ""
         else
           CRITICAL_PROGS.each do |k,v|
-            success = File.executable?(v)
-            puts "Critical\t#{k}\t#{v}\t#{success}"
+            sr = SearchResult.new(v).run
+            puts "Critical\t#{k}\t#{sr.formatted_paths}\t#{sr.success}"
           end
           OPTIONAL_PROGS.each do |s,h|
             h.each do |k,v|
-              File.executable?(v).tap do |success|
-                puts "#{s}\t#{k}\t#{v}\t#{success}"
-              end
+              sr = SearchResult.new(v).run
+              puts "#{s}\t#{k}\t#{sr.formatted_paths}\t#{sr.success}"
             end
           end
         end

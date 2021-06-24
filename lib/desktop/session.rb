@@ -198,7 +198,8 @@ module Desktop
     def start_websocket_server
       return true if !@websocket_pid.nil?
 
-      unless File.executable?('/usr/bin/websockify')
+      websockify_exe = Config.websockify_paths.first { |p| File.executable?(p) }
+      unless websockify_exe
         @websocket_port = 0
         return false
       end
@@ -213,7 +214,7 @@ module Desktop
         )
         exec(
           {},
-          '/usr/bin/websockify',
+          websockify_exe,
           "0.0.0.0:#{@websocket_port}",
           "127.0.0.1:#{port}",
           [:out, :err] => [log_file ,'w']
