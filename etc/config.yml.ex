@@ -32,3 +32,7 @@
 #session_env_override: true
 # The PATH to set when blanking the environment for a desktop session
 #session_env_path: /usr/bin:/usr/sbin
+# Paths to test to find websockify executable.  The first executable found
+# will be used.
+#websockify_paths:
+#  - /usr/bin/websockify

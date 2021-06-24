@@ -46,7 +46,7 @@ module Desktop
           'Image converter (stage 2)' => '/usr/bin/pnmtopng',
         },
         'Networking' => {
-          'Websocket provider' => '/usr/bin/websockify',
+          'Websocket provider' => Config.websockify_paths,
         },
         'Improved passwords' =>  {
           'Password generator' => '/usr/bin/apg',
@@ -82,12 +82,30 @@ module Desktop
               services: (services = [])
             }
             h.each do |k,v|
-              success = File.executable?(v)
-              services << {
-                description: k,
-                executable: v,
-                presence: success
-              }
+              if v.is_a?(Array)
+                p = v.detect { |p| File.executable?(p) }
+                success = !!p
+                if success
+                  services << {
+                    description: k,
+                    executable: p,
+                    presence: success
+                  }
+                else
+                  services << {
+                    description: k,
+                    executable: v,
+                    presence: success
+                  }
+                end
+              else
+                success = File.executable?(v)
+                services << {
+                  description: k,
+                  executable: v,
+                  presence: success
+                }
+              end
               section_success &&= success
               all_success &&= success
             end
@@ -96,7 +114,6 @@ module Desktop
           output[:status] = all_success ? 'good' : ( critical_success ? 'pass' : 'fail' )
           puts JSON.pretty_generate(output)
         elsif $stdout.tty?
-          summary = ""
           puts "Verifying critical dependencies:\n\n"
           critical_success = true
           CRITICAL_PROGS.each do |k,v|
@@ -111,9 +128,21 @@ module Desktop
             section_output = ""
             section_success = true
             h.each do |k,v|
-              File.executable?(v).tap do |success|
-                section_output << "     > #{success ? "\u2705" : "\u274c"} #{k} (#{v})\n"
-                section_success &&= success
+              if v.is_a?(Array)
+                p = v.detect { |p| File.executable?(p) }
+                success = !!p
+                if success
+                  section_output << "     > #{success ? "\u2705" : "\u274c"} #{k} (#{p})\n"
+                  section_success &&= success
+                else
+                  section_output << "     > #{success ? "\u2705" : "\u274c"} #{k} (#{v.join(':')})\n"
+                  section_success &&= success
+                end
+              else
+                File.executable?(v).tap do |success|
+                  section_output << "     > #{success ? "\u2705" : "\u274c"} #{k} (#{v})\n"
+                  section_success &&= success
+                end
               end
             end
             if !section_success
@@ -142,8 +171,18 @@ EOF
           end
           OPTIONAL_PROGS.each do |s,h|
             h.each do |k,v|
-              File.executable?(v).tap do |success|
-                puts "#{s}\t#{k}\t#{v}\t#{success}"
+              if v.is_a?(Array)
+                p = v.detect { |p| File.executable?(p) }
+                success = !!p
+                if success
+                  puts "#{s}\t#{k}\t#{p}\t#{success}"
+                else
+                  puts "#{s}\t#{k}\t#{v.join(':')}\t#{success}"
+                end
+              else
+                File.executable?(v).tap do |success|
+                  puts "#{s}\t#{k}\t#{v}\t#{success}"
+                end
               end
             end
           end

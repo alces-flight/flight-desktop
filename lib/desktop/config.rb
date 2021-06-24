@@ -137,6 +137,16 @@ module Desktop
           File.executable?(vnc_server_program)
       end
 
+      def websockify_paths
+        @websockify_paths ||=
+          data.fetch(
+            :websockify_paths,
+            default: [
+              '/usr/bin/websockify'
+            ]
+          ).map {|p| File.expand_path(p, Config.root)}
+      end
+
       def type_paths
         @type_paths ||=
           data.fetch(
