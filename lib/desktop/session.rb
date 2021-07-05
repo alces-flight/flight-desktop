@@ -198,7 +198,7 @@ module Desktop
     def start_websocket_server
       return true if !@websocket_pid.nil?
 
-      websockify_exe = Config.websockify_paths.first { |p| File.executable?(p) }
+      websockify_exe = Config.websockify_paths.detect { |p| File.executable?(p) }
       unless websockify_exe
         @websocket_port = 0
         return false
