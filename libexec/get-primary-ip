@@ -69,7 +69,12 @@ if network_is_ec2; then
     echo "$ip"
   fi
 elif network_is_azure; then
-  curl -s -H Metadata:true "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/publicIpAddress?api-version=2017-08-01&format=text"
+  ip=$(curl -s -H Metadata:true "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/publicIpAddress?api-version=2017-08-01&format=text")
+  if [ -z "$ip" ]; then
+    network_get_iface_address $(network_get_route_iface 8.8.8.8)
+  else
+    echo "$ip"
+  fi
 else
   network_get_iface_address $(network_get_route_iface 8.8.8.8)
 fi
