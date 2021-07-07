@@ -160,6 +160,18 @@ EOF
       c.summary = 'Start an interactive desktop session'
       c.action Commands, :start
       c.option '-g', '--geometry GEOMETRY', Geometry, 'Specify desktop geometry.'
+      c.slop.array '-a', '--app', <<~DESC.chomp, delimiter: nil, meta: '"BINARY [ARGUMENTS...]"'
+        Specify the binary/launch script for a graphical application.
+
+        Multiple applications can be started by repating the --app flag.
+        Not supported by all desktop types.
+      DESC
+      c.slop.array '-s', '--script', <<~DESC.chomp, delimiter: nil, meta: '"SCRIPT [ARGUMENTS...]"'
+        Start a script on the remote session.
+
+        Mutliple scripts can be started by repeating the --script flag.
+        Not supported by all desktop types.
+      DESC
       c.description = <<EOF
 Start a new interactive desktop session and display details about the
 new session.
