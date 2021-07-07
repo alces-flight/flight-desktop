@@ -338,12 +338,10 @@ module Desktop
           "apps.log"
         )
         exec(
-          {},
+          ENV.to_h.dup.merge({ "DISPLAY" => ":#{display}" }),
           'bash',
           type.launch_app_path,
-          ":#{display}",
           index.to_s,
-          Dir.pwd,
           *args,
           [:out, :err] => [log_file ,'w']
         )
@@ -358,12 +356,10 @@ module Desktop
           "scripts.log"
         )
         exec(
-          {},
+          ENV.to_h.dup.merge({ "DISPLAY" => ":#{display}" }),
           'bash',
           type.launch_script_path,
-          ":#{display}",
           index.to_s,
-          Dir.pwd,
           *args,
           [:out, :err] => [log_file ,'w']
         )
