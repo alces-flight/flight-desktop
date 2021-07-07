@@ -331,6 +331,46 @@ module Desktop
       rc.success?
     end
 
+    def start_app(*args, index:, max:)
+      pid = fork {
+        log_file = File.join(
+          dir,
+          "apps.log"
+        )
+        exec(
+          {},
+          'bash',
+          type.launch_app_path,
+          ":#{display}",
+          index.to_s,
+          max.to_s,
+          *args,
+          [:out, :err] => [log_file ,'w']
+        )
+      }
+      Process.detach(pid)
+    end
+
+    def start_script(*args, index:, max:)
+      pid = fork {
+        log_file = File.join(
+          dir,
+          "scripts.log"
+        )
+        exec(
+          {},
+          'bash',
+          type.launch_script_path,
+          ":#{display}",
+          index.to_s,
+          max.to_s,
+          *args,
+          [:out, :err] => [log_file ,'w']
+        )
+      }
+      Process.detach(pid)
+    end
+
     def active?
       if @state != :broken && local? && File.exists?(pidfile)
         pid = File.read(pidfile)

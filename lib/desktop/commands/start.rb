@@ -32,13 +32,14 @@ require_relative '../session'
 require_relative '../type'
 
 require 'whirly'
+require 'shellwords'
 
 module Desktop
   module Commands
     class Start < Command
-
       def run
         assert_functional
+        assert_app_and_script_paths
         if !type.verified?
           raise UnverifiedTypeError, "Desktop type '#{type.name}' has not been verified"
         else
@@ -53,6 +54,8 @@ module Desktop
               status: status_text
             )
             success = session.start(geometry: @options.geometry || Config.geometry)
+            start_apps(session)
+            start_scripts(session)
             Whirly.stop
           rescue
             puts "\u274c #{status_text}\n\n"
@@ -77,9 +80,38 @@ module Desktop
         @session ||= Session.new(type: type)
       end
 
+      def default_shell
+        @default_shell ||= Etc.getpwuid(Process.euid).shell
+      end
+
+      def start_apps(session)
+        max = @options.app.length
+        @options.app.each_with_index do |cmd, idx|
+          parts = Shellwords.split(cmd)
+          session.start_app(*parts, index: idx, max: max)
+        end
+      end
+
+      def start_scripts(session)
+        max = @options.script.length
+        @options.script.each_with_index do |cmd, idx|
+          parts = Shellwords.split(cmd)
+          session.start_script(*parts, index: idx, max: max)
+        end
+      end
+
       def assert_functional
         if !Config.functional?
           raise SessionOperationError, "system-level prerequisites not present"
+        end
+      end
+
+      def assert_app_and_script_paths
+        if !(@options.app.empty? || File.exists?(type.launch_app_path))
+          raise TypeOperationError, "can not launch graphical apps within desktop type: #{type.name}"
+        end
+        if !(@options.script.empty? || File.exists?(type.launch_script_path))
+          raise TypeOperationError, "can not launch scripts within desktop type: #{type.name}"
         end
       end
     end

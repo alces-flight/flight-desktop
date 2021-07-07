@@ -121,6 +121,14 @@ module Desktop
       @hidden = (File.basename(dir)[0] == '.' || md[:hidden] || false)
     end
 
+    def launch_app_path
+      @launch_app_path ||= File.join(dir, 'launch-app.sh')
+    end
+
+    def launch_script_path
+      @launch_script_path ||= File.join(dir, 'launch-script.sh')
+    end
+
     def session_script
       @session_script ||= File.join(@dir, 'session.sh')
     end
