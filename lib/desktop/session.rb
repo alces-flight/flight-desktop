@@ -331,7 +331,7 @@ module Desktop
       rc.success?
     end
 
-    def start_app(*args, index:, max:)
+    def start_app(*args, index:)
       pid = fork {
         log_file = File.join(
           dir,
@@ -343,7 +343,7 @@ module Desktop
           type.launch_app_path,
           ":#{display}",
           index.to_s,
-          max.to_s,
+          Dir.pwd,
           *args,
           [:out, :err] => [log_file ,'w']
         )
@@ -351,7 +351,7 @@ module Desktop
       Process.detach(pid)
     end
 
-    def start_script(*args, index:, max:)
+    def start_script(*args, index:)
       pid = fork {
         log_file = File.join(
           dir,
@@ -363,7 +363,7 @@ module Desktop
           type.launch_script_path,
           ":#{display}",
           index.to_s,
-          max.to_s,
+          Dir.pwd,
           *args,
           [:out, :err] => [log_file ,'w']
         )

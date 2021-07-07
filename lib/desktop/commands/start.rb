@@ -85,18 +85,16 @@ module Desktop
       end
 
       def start_apps(session)
-        max = @options.app.length
         @options.app.each_with_index do |cmd, idx|
           parts = Shellwords.split(cmd)
-          session.start_app(*parts, index: idx, max: max)
+          session.start_app(*parts, index: idx)
         end
       end
 
       def start_scripts(session)
-        max = @options.script.length
         @options.script.each_with_index do |cmd, idx|
           parts = Shellwords.split(cmd)
-          session.start_script(*parts, index: idx, max: max)
+          session.start_script(*parts, index: idx)
         end
       end
 
