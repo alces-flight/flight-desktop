@@ -29,30 +29,18 @@ require_relative 'version'
 
 require 'tty/reader'
 require 'commander'
-require_relative 'patches/highline-ruby_27_compat'
 
 module Desktop
   module CLI
     PROGRAM_NAME = ENV.fetch('FLIGHT_PROGRAM_NAME','desktop')
 
-    extend Commander::Delegates
+    extend Commander::CLI
     program :application, "Flight Desktop"
     program :name, PROGRAM_NAME
     program :version, "v#{Desktop::VERSION}"
     program :description, 'Manage interactive GUI desktop sessions.'
     program :help_paging, false
     default_command :help
-    silent_trace!
-
-    error_handler do |runner, e|
-      case e
-      when TTY::Reader::InputInterrupt
-        $stderr.puts "\n#{Paint['WARNING', :underline, :yellow]}: Cancelled by user"
-        exit(130)
-      else
-        Commander::Runner::DEFAULT_ERROR_HANDLER.call(runner, e)
-      end
-    end
 
     if [/^xterm/, /rxvt/, /256color/].all? { |regex| ENV['TERM'] !~ regex }
       Paint.mode = 0

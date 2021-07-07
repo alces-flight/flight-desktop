@@ -38,7 +38,7 @@ begin
 
   require 'desktop/cli'
   Dir.chdir(ENV.fetch('FLIGHT_CWD','.'))
-  Desktop::CLI.run!
+  Desktop::CLI.run!(*ARGV)
 rescue Interrupt
   if Kernel.const_defined?(:Paint)
     $stderr.print "\n#{Paint['WARNING', :underline, :yellow]}: Cancelled by user"
