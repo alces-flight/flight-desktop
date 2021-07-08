@@ -332,39 +332,43 @@ module Desktop
     end
 
     def start_app(*args, index:)
-      pid = fork {
-        log_file = File.join(
-          dir,
-          "apps.log"
-        )
-        exec(
-          ENV.to_h.dup.merge({ "DISPLAY" => ":#{display}" }),
-          'bash',
-          type.launch_app_path,
-          index.to_s,
-          *args,
-          [:out, :err] => [log_file ,'w']
-        )
-      }
-      Process.detach(pid)
+      CommandUtils.with_clean_env do
+        pid = fork {
+          log_file = File.join(
+            dir,
+            "apps.log"
+          )
+          exec(
+            ENV.to_h.dup.merge({ "DISPLAY" => ":#{display}" }),
+            'bash',
+            type.launch_app_path,
+            index.to_s,
+            *args,
+            [:out, :err] => [log_file ,'w']
+          )
+        }
+        Process.detach(pid)
+      end
     end
 
     def start_script(*args, index:)
-      pid = fork {
-        log_file = File.join(
-          dir,
-          "scripts.log"
-        )
-        exec(
-          ENV.to_h.dup.merge({ "DISPLAY" => ":#{display}" }),
-          'bash',
-          type.launch_script_path,
-          index.to_s,
-          *args,
-          [:out, :err] => [log_file ,'w']
-        )
-      }
-      Process.detach(pid)
+      CommandUtils.with_clean_env do
+        pid = fork {
+          log_file = File.join(
+            dir,
+            "scripts.log"
+          )
+          exec(
+            ENV.to_h.dup.merge({ "DISPLAY" => ":#{display}" }),
+            'bash',
+            type.launch_script_path,
+            index.to_s,
+            *args,
+            [:out, :err] => [log_file ,'w']
+          )
+        }
+        Process.detach(pid)
+      end
     end
 
     def active?
