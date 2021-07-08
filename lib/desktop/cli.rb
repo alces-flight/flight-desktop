@@ -176,7 +176,7 @@ EOF
 Start a new interactive desktop session and display details about the
 new session.
 
-By default the TYPE started will be '#{Config.desktop_type.name}', which can be overridden
+By default the TYPE started will be '#{Type.default.name}', which can be overridden
 by specifying the desktop TYPE argument.
 
 The default geometry for sessions is #{Config.geometry}, which can be

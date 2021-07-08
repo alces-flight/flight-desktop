@@ -40,7 +40,6 @@ GEM
     sys-proctable (1.2.2)
       ffi
     tty-color (0.5.0)
-    tty-config (0.3.2)
     tty-cursor (0.7.0)
     tty-prompt (0.19.0)
       necromancer (~> 0.5.0)
@@ -71,7 +70,6 @@ DEPENDENCIES
   flight_configuration!
   ronn
   sys-proctable
-  tty-config
   tty-prompt
   tty-table
   whirly

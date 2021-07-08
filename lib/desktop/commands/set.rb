@@ -33,7 +33,7 @@ module Desktop
     class Set < Command
       def run
         if args.any?
-          if options.global && !Config.data_writable?
+          if options.global && !File.writable?(Flight.config.class.global_config)
             raise InvalidSettingError, "permission denied for updating global defaults"
           end
           updates = []
@@ -55,7 +55,8 @@ module Desktop
           end
           updates.each(&:call)
         end
-        puts "Default desktop type: #{Config.desktop_type.name}"
+        # TODO: These will be wrong after the update
+        puts "Default desktop type: #{Type.default.name}"
         puts "    Default geometry: #{Config.geometry}"
       end
     end

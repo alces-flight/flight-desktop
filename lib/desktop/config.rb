@@ -26,7 +26,6 @@
 # ==============================================================================
 require_relative 'type'
 require 'xdg'
-require 'tty-config'
 require 'fileutils'
 
 require 'flight_configuration'
@@ -61,9 +60,20 @@ module Desktop
           Pathname.new('../../etc/config.yml').expand_path(__dir__),
           root_path.join("etc/#{application_name}.yaml"),
           root_path.join("etc/#{application_name}.#{Flight.env}.yaml"),
-          root_path.join("etc/#{application_name}.local.yaml"),
+          global_config,
           root_path.join("etc/#{application_name}.#{Flight.env}.local.yaml"),
+          user_config
         ]
+      end
+
+      def global_config
+        @global_config ||= root_path.join("etc/#{application_name}.local.yaml")
+      end
+
+      # NOTE: yml is used as the extension for legacy reasons
+      #       Change to yaml on the next major release
+      def user_config
+        @user_config ||= desktop_path.join('config.yml').expand_path(xdg_config.home)
       end
 
       def desktop_path
@@ -113,6 +123,9 @@ module Desktop
     attribute :session_env_path, default: '/usr/bin:/usr/sbin:/bin:/sbin'
     attribute :session_env_override, default: true
 
+    attribute :geometry, default: '1024x768'
+    attribute :desktop_type, required: false
+
     attribute :log_dir, default: 'log/desktop',
               transform: ->(path) do
                 root = if Process.euid == 0
@@ -128,6 +141,25 @@ module Desktop
     def access_host_or_ip
       access_host || access_ip
     end
+
+    def save_key(key, value, global:)
+      # Load the existing data
+      path = global ? self.class.global_config : self.class.user_config
+      if File.exists?(path)
+        # Ensure all keys are loaded as symbols
+        data = YAML.load(File.read(path), symbolize_names: true)
+      else
+        data = {}
+      end
+
+      # Update the data
+      data[key.to_sym] = value
+
+      # Ensure all keys are saved as strings
+      data = data.map { |k, v| [k.to_s, v] }.to_h
+      FileUtils.mkdir_p File.dirname(path)
+      File.write(path, YAML.dump(data))
+    end
   end
 
   module Config
@@ -139,49 +171,6 @@ module Desktop
         define_method(key) { Flight.config.send(key) }
       end
 
-      def data
-        @data ||= TTY::Config.new.tap do |cfg|
-          cfg.append_path(File.join(root, 'etc'))
-          begin
-            cfg.read
-          rescue TTY::Config::ReadError
-            nil
-          end
-        end
-      end
-
-      def save_data
-        FileUtils.mkdir_p(File.join(root, 'etc'))
-        data.write(force: true)
-      end
-
-      def data_writable?
-        File.writable?(File.join(root, 'etc'))
-      end
-
-      def user_data
-        @user_data ||= TTY::Config.new.tap do |cfg|
-          xdg_config.all.map do |p|
-            File.join(p, DESKTOP_DIR_SUFFIX)
-          end.each(&cfg.method(:append_path))
-          begin
-            cfg.read
-          rescue TTY::Config::ReadError
-            nil
-          end
-        end
-      end
-
-      def save_user_data
-        FileUtils.mkdir_p(
-          File.join(
-            xdg_config.home,
-            DESKTOP_DIR_SUFFIX
-          )
-        )
-        user_data.write(force: true)
-      end
-
       def root
         @root ||= File.expand_path(File.join(__dir__, '..', '..'))
       end
@@ -191,49 +180,9 @@ module Desktop
           File.executable?(vnc_server_program)
       end
 
-      def geometry
-        user_data.fetch(
-          :geometry,
-          default: data.fetch(
-            :geometry,
-            default: '1024x768'
-          )
-        )
-      end
-
       def set_geometry(geometry, global: false)
         raise 'invalid geometry string' if geometry !~ /^[0-9]+x[0-9]+$/
-        if global
-          Config.data.set(:geometry, value: geometry)
-          Config.save_data
-        else
-          Config.user_data.set(:geometry, value: geometry)
-          Config.save_user_data
-        end
-      end
-
-      def desktop_type
-        type_name =
-          user_data.fetch(
-            :desktop_type,
-            default: data.fetch(
-              :desktop_type
-            )
-          )
-        (type_name && Type[type_name] rescue nil) || Type.default
-      end
-
-      private
-      def xdg_config
-        @xdg_config ||= XDG::Config.new
-      end
-
-      def xdg_data
-        @xdg_data ||= XDG::Data.new
-      end
-
-      def xdg_cache
-        @xdg_cache ||= XDG::Cache.new
+        Flight.config.save_key('geometry', geometry, global: global)
       end
     end
   end

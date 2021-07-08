@@ -80,18 +80,20 @@ module Desktop
       end
 
       def default
-        all.values.find { |t| t.default == true } || all.values.first || Type.new({name: 'default'}, '/tmp')
+        type = nil
+        begin
+          type = Type[Flight.config.desktop_type] if Flight.config.desktop_type
+        rescue UnknownDesktopTypeError
+          # NOOP
+        end
+        type || all.values.find { |t| t.default == true } || \
+                all.values.first || \
+                Type.new({name: 'default'}, '/tmp')
       end
 
       def set_default(type_name, global: false)
         self[type_name].tap do |t|
-          if global
-            Config.data.set(:desktop_type, value: t.name)
-            Config.save_data
-          else
-            Config.user_data.set(:desktop_type, value: t.name)
-            Config.save_user_data
-          end
+          Flight.config.save_key('desktop_type', t.name, global: global)
         end
       end
     end
