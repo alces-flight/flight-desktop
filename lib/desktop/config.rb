@@ -29,10 +29,115 @@ require 'xdg'
 require 'tty-config'
 require 'fileutils'
 
+require 'flight_configuration'
+
+module Flight
+  def self.config
+    @config ||= Desktop::Configuration.load
+  end
+
+  def self.env
+    @env ||= ENV['flight_ENVIRONMENT'] || 'production'
+  end
+
+  def self.root
+    @root ||= if env == 'production' && ENV['flight_ROOT']
+                File.expand_path(ENV['flight_ROOT'])
+              else
+                File.expand_path('../..', __dir__)
+              end
+  end
+end
+
 module Desktop
+  class Configuration
+    extend FlightConfiguration::DSL
+
+    class << self
+      # Override the config files with the original set
+      def config_files(*_)
+        @config_files ||= [
+          # Apply the legacy config
+          Pathname.new('../../etc/config.yml').expand_path(__dir__),
+          root_path.join("etc/#{application_name}.yaml"),
+          root_path.join("etc/#{application_name}.#{Flight.env}.yaml"),
+          root_path.join("etc/#{application_name}.local.yaml"),
+          root_path.join("etc/#{application_name}.#{Flight.env}.local.yaml"),
+        ]
+      end
+
+      def desktop_path
+        @desktop_path ||= Pathname.new('flight/desktop')
+      end
+
+      def xdg_config
+        @xdg_config ||= XDG::Config.new
+      end
+
+      def xdg_data
+        @xdg_data ||= XDG::Data.new
+      end
+
+      def xdg_cache
+        @xdg_cache ||= XDG::Cache.new
+      end
+    end
+
+    application_name 'desktop'
+
+    attribute :vnc_passwd_program, default: '/usr/bin/vncpasswd'
+    attribute :vnc_server_program, default: 'libexec/vncserver',
+              transform: relative_to(root_path)
+
+    # TODO: Validate it is an [String]
+    attribute :type_paths, default: ['etc/types'], transform: ->(paths) do
+      paths.each { |p| File.expand_path(Flight.root) }
+    end
+    attribute :websockify_paths, default: ['/usr/bin/websockify'], transform: ->(paths) do
+      paths.each { |p| File.expand_path(Flight.root) }
+    end
+    attribute :session_path, default: desktop_path.join('sessions'),
+              transform: relative_to(xdg_cache.home)
+    attribute :bg_image, default: 'etc/assets/backgrounds/default.jpg',
+              transform: relative_to(root_path)
+
+    attribute :access_hosts, default: []
+    attribute :access_ip, required: false, defualt: ->() { NetworkUtils.primary_ip }
+    attribute :access_host, required: false
+
+    attribute :global_state_path, default: 'var/lib/desktop',
+              transform: relative_to(root_path)
+    attribute :user_state_path, default: desktop_path.join('state'),
+              transform: relative_to(xdg_data.home)
+
+    attribute :session_env_path, default: '/usr/bin:/usr/sbin:/bin:/sbin'
+    attribute :session_env_override, default: true
+
+    attribute :log_dir, default: 'log/desktop',
+              transform: ->(path) do
+                root = if Process.euid == 0
+                         root_path
+                       else
+                         xdg_cache.home
+                       end
+                File.expand_path(path, root)
+              end
+
+    # NOTE: flight_configuration does not have support for transient dependencies
+    # between attributes. Instead a wrapper method is required.
+    def access_host_or_ip
+      access_host || access_ip
+    end
+  end
+
   module Config
     class << self
       DESKTOP_DIR_SUFFIX = File.join('flight','desktop')
+
+      # Define the Configuration delegates
+      Configuration.attributes.each do |key, _|
+        define_method(key) { Flight.config.send(key) }
+      end
 
       def data
         @data ||= TTY::Config.new.tap do |cfg|
@@ -81,101 +186,9 @@ module Desktop
         @root ||= File.expand_path(File.join(__dir__, '..', '..'))
       end
 
-      def session_path
-        @session_path ||= File.join(xdg_cache.home, DESKTOP_DIR_SUFFIX, 'sessions')
-      end
-
-      def user_state_path
-        @user_state_path ||= File.join(xdg_data.home, DESKTOP_DIR_SUFFIX, 'state')
-      end
-
-      def user_log_path
-        @user_log_path ||= File.join(xdg_cache.home, DESKTOP_DIR_SUFFIX, 'log')
-      end
-
-      def global_state_path
-        @global_state_path ||= File.expand_path(
-          data.fetch(
-            :global_state_path,
-            default: 'var/lib/desktop'
-          ),
-          Config.root
-        )
-      end
-
-      def global_log_path
-        @global_log_path ||= File.expand_path(
-          data.fetch(
-            :global_log_path,
-            default: 'var/log/desktop'
-          ),
-          Config.root
-        )
-      end
-
-      def vnc_passwd_program
-        @vnc_passwd_program ||=
-          data.fetch(
-            :vnc_passwd_program,
-            default: '/usr/bin/vncpasswd'
-          )
-      end
-
-      def vnc_server_program
-        @vnc_server_program ||=
-          File.expand_path(
-            data.fetch(
-              :vnc_server_program,
-              default: File.join('libexec','vncserver')
-            ),
-            Config.root
-          )
-      end
-
       def functional?
         File.executable?(vnc_passwd_program) &&
           File.executable?(vnc_server_program)
-      end
-
-      def websockify_paths
-        @websockify_paths ||=
-          data.fetch(
-            :websockify_paths,
-            default: [
-              '/usr/bin/websockify'
-            ]
-          ).map {|p| File.expand_path(p, Config.root)}
-      end
-
-      def type_paths
-        @type_paths ||=
-          data.fetch(
-            :type_paths,
-            default: [
-              'etc/types'
-            ]
-          ).map {|p| File.expand_path(p, Config.root)}
-      end
-
-      def access_hosts
-        data.fetch(
-          :access_hosts,
-          default: []
-        )
-      end
-
-      def access_ip
-        data.fetch(
-          :access_ip,
-          default: NetworkUtils.primary_ip
-        )
-      end
-
-      def access_host
-        data.fetch(
-          :access_host,
-          default: access_ip
-        )
       end
 
       def geometry
@@ -208,39 +221,6 @@ module Desktop
             )
           )
         (type_name && Type[type_name] rescue nil) || Type.default
-      end
-
-      def bg_image
-        @bg_image ||=
-          user_data.fetch(
-            :bg_image,
-            default: data.fetch(
-              :bg_image,
-              default: 'etc/assets/backgrounds/default.jpg'
-            )
-          )
-      end
-
-      def session_env_path
-        @session_env_path ||=
-          user_data.fetch(
-            :session_env_path,
-            default: data.fetch(
-              :session_env_path,
-              default: '/usr/bin:/usr/sbin:/bin:/sbin'
-            )
-          )
-      end
-
-      def session_env_override
-        @session_env_override ||=
-          user_data.fetch(
-            :session_env_override,
-            default: data.fetch(
-              :session_env_override,
-              default: true
-            )
-          )
       end
 
       private

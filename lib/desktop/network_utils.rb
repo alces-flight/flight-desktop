@@ -43,7 +43,7 @@ module Desktop
       end
 
       def primary_ip
-        @primary_ip ||= `#{Config.root}/libexec/get-primary-ip`.chomp
+        @primary_ip ||= `#{Flight.root}/libexec/get-primary-ip`.chomp
       end
 
       def reachable?(port)

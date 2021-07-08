@@ -4,6 +4,13 @@ GIT
   specs:
     xdg (3.0.2)
 
+GIT
+  remote: https://github.com/openflighthpc/flight_configuration.git
+  revision: 2cbc8c4b698c71d2fd18edb082fff5110701cb7e
+  tag: 0.4.0
+  specs:
+    flight_configuration (0.1.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -61,6 +68,7 @@ PLATFORMS
 
 DEPENDENCIES
   commander-openflighthpc (~> 1.1.0)
+  flight_configuration!
   ronn
   sys-proctable
   tty-config

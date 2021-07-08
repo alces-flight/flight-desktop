@@ -272,10 +272,7 @@ module Desktop
         {}.tap do |h|
           h['flight_DESKTOP_root'] = Config.root
           h['flight_DESKTOP_type_root'] = type.dir
-          h['flight_DESKTOP_bg_image'] = File.expand_path(
-            Config.bg_image,
-            Config.root
-          )
+          h['flight_DESKTOP_bg_image'] = Config.bg_image
           h['flight_DESKTOP_geometry'] = geometry
           if Config.session_env_override
             h['USER'] = ENV['USER']
