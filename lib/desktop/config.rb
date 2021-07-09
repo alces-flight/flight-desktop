@@ -49,25 +49,15 @@ module Desktop
     extend FlightConfiguration::DSL
 
     class << self
-      # Override the config files with the original set
+      # Override the config files to use the legacy paths
       def config_files(*_)
-        @config_files ||= [
-          # Apply the legacy config
-          Pathname.new('../../etc/config.yml').expand_path(__dir__),
-          root_path.join("etc/#{application_name}.yaml"),
-          root_path.join("etc/#{application_name}.#{Flight.env}.yaml"),
-          global_config,
-          root_path.join("etc/#{application_name}.#{Flight.env}.local.yaml"),
-          user_config
-        ]
+        @config_files ||= [global_config, user_config]
       end
 
       def global_config
-        @global_config ||= root_path.join("etc/#{application_name}.local.yaml")
+        @global_config ||= Pathname.new('../../etc/config.yml').expand_path(__dir__)
       end
 
-      # NOTE: yml is used as the extension for legacy reasons
-      #       Change to yaml on the next major release
       def user_config
         @user_config ||= desktop_path.join('config.yml').expand_path(xdg_config.home)
       end
@@ -122,15 +112,8 @@ module Desktop
     attribute :geometry, default: '1024x768'
     attribute :desktop_type, required: false
 
-    attribute :log_dir, default: 'log/desktop',
-              transform: ->(path) do
-                root = if Process.euid == 0
-                         root_path
-                       else
-                         xdg_cache.home
-                       end
-                File.expand_path(path, root)
-              end
+    attribute :global_log_path, default: 'log/desktop', transform: relative_to(root_path)
+    attribute :user_log_path, default: 'log/desktop', transform: relative_to(xdg_cache.home)
 
     # NOTE: flight_configuration does not have support for transient dependencies
     # between attributes. Instead a wrapper method is required.

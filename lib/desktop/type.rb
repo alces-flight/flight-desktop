@@ -153,7 +153,7 @@ EOF
         true
       else
         log_file = File.join(
-          Flight.config.log_dir,
+          log_dir,
           "#{name}.prepare.log"
         )
         raise TypeOperationError, "Unable to prepare desktop type '#{name}'; see: #{log_file}"
@@ -319,10 +319,10 @@ EOF
             wr.close_on_exec = false
             setup_bash_funcs(ENV, wr.fileno)
             log_file = File.join(
-              Flight.config.log_dir,
+              log_dir,
               "#{name}.#{op}.log"
             )
-            FileUtils.mkdir_p(Flight.config.log_dir)
+            FileUtils.mkdir_p(log_dir)
             exec(
               {},
               '/bin/bash',
@@ -341,6 +341,15 @@ EOF
 
     def global_state_dir
       @global_state_dir ||= File.join(Config.global_state_path, name)
+    end
+
+    def log_dir
+      @log_dir ||=
+        if Process.euid == 0
+          Config.global_log_path
+        else
+          Config.user_log_path
+        end
     end
 
     def state_dir

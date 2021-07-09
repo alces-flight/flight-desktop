@@ -278,7 +278,7 @@ module Desktop
           # due to the desktop-types being extracted. Originally it was
           # used to construct paths like:
           #
-          # gnome/session.sh:flight_DESKTOP_type_root="${flight_DESKTOP_type_root:-${flight_DESKTOP_root}/etc/types/gnome}"
+          # etc/gnome/session.sh:flight_DESKTOP_type_root="${flight_DESKTOP_type_root:-${flight_DESKTOP_root}/etc/types/gnome}"
           #
           # However flight-desktop-type are no longer stored under 'etc',
           # so this paths isn't correct. The builder also changes the path
