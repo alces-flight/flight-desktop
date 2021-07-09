@@ -36,9 +36,11 @@ module Desktop
           if options.global && !File.writable?(Flight.config.class.global_config)
             raise InvalidSettingError, "permission denied for updating global defaults"
           end
+          hash = {}
           updates = []
           args.each do |a|
             k, v = a.split('=')
+            hash[k] = v
             raise InvalidSettingError, "missing value: #{a}" if v.nil?
             case k
             when 'desktop'
@@ -55,9 +57,8 @@ module Desktop
           end
           updates.each(&:call)
         end
-        # TODO: These will be wrong after the update
-        puts "Default desktop type: #{Type.default.name}"
-        puts "    Default geometry: #{Config.geometry}"
+        puts "Default desktop type: #{hash.fetch('desktop', Type.default.name)}"
+        puts "    Default geometry: #{hash.fetch('geometry', Config.geometry)}"
       end
     end
   end

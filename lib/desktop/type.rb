@@ -101,6 +101,11 @@ module Desktop
     attr_reader :name
     attr_reader :summary
     attr_reader :url
+    # NOTE: This 'default' key is a misnomer. It is not necessarily the default type.
+    # Instead it flags the type *could* be the default if flight-desktop hasn't otherwise
+    # been configured with one.
+    #
+    # See Type.default for the actual default desktop for the current user.
     attr_reader :default
     attr_reader :arch
     attr_reader :hidden
