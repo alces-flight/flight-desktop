@@ -54,7 +54,7 @@ module Desktop
       end
     end
 
-    if ENV['TERM'] !~ /^xterm/ && ENV['TERM'] !~ /rxvt/
+    if [/^xterm/, /rxvt/, /256color/].all? { |regex| ENV['TERM'] !~ regex }
       Paint.mode = 0
     end
 
