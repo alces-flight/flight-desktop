@@ -270,10 +270,25 @@ module Desktop
     def start_vnc_server(geometry: Config.geometry)
       IO.popen(
         {}.tap do |h|
-          h['flight_DESKTOP_root'] = Config.root
           h['flight_DESKTOP_type_root'] = type.dir
           h['flight_DESKTOP_bg_image'] = Config.bg_image
           h['flight_DESKTOP_geometry'] = geometry
+
+          # DEPREACTED: flight_DESKTOP_root does not function correctly
+          # due to the desktop-types being extracted. Originally it was
+          # used to construct paths like:
+          #
+          # gnome/session.sh:flight_DESKTOP_type_root="${flight_DESKTOP_type_root:-${flight_DESKTOP_root}/etc/types/gnome}"
+          #
+          # However flight-desktop-type are no longer stored under 'etc',
+          # so this paths isn't correct. The builder also changes the path
+          # to be within 'usr/lib'. AFAICS, this fallback is never correct.
+          #
+          # Instead flight_DESKTOP_root should be removed entirely from
+          # flight-desktop{-type} in favour of setting
+          # `flight_DESKTOP_type_root and flight_DESKTOP_bg_image
+          # directly; as done above.
+          h['flight_DESKTOP_root'] = Config.root
           if Config.session_env_override
             h['USER'] = ENV['USER']
             h['HOME'] = ENV['HOME']

@@ -36,15 +36,11 @@ module Flight
   end
 
   def self.env
-    @env ||= ENV['flight_ENVIRONMENT'] || 'production'
+    @env ||= 'production'
   end
 
   def self.root
-    @root ||= if env == 'production' && ENV['flight_ROOT']
-                File.expand_path(ENV['flight_ROOT'])
-              else
-                File.expand_path('../..', __dir__)
-              end
+    @root ||= File.expand_path('../..', __dir__)
   end
 end
 
@@ -172,7 +168,7 @@ module Desktop
       end
 
       def root
-        @root ||= File.expand_path(File.join(__dir__, '..', '..'))
+        Flight.root
       end
 
       def functional?
