@@ -32,11 +32,11 @@ module Desktop
   module Commands
     class Set < Command
       def run
+        hash = {}
         if args.any?
           if options.global && !File.writable?(Flight.config.class.global_config)
             raise InvalidSettingError, "permission denied for updating global defaults"
           end
-          hash = {}
           updates = []
           args.each do |a|
             k, v = a.split('=')
