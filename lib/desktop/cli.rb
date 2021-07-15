@@ -163,7 +163,7 @@ EOF
       c.slop.array '-a', '--app', <<~DESC.chomp, delimiter: nil, meta: '"BINARY [ARGUMENTS...]"'
         Specify the binary/launch script for a graphical application.
 
-        Multiple applications can be started by repating the --app flag.
+        Multiple applications can be started by repeating the --app flag.
         Not supported by all desktop types.
       DESC
       c.slop.array '-s', '--script', <<~DESC.chomp, delimiter: nil, meta: '"SCRIPT [ARGUMENTS...]"'

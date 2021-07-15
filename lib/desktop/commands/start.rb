@@ -106,10 +106,10 @@ module Desktop
 
       def assert_app_and_script_paths
         if !(@options.app.empty? || File.exists?(type.launch_app_path))
-          raise TypeOperationError, "can not launch graphical apps within desktop type: #{type.name}"
+          raise TypeOperationError, "cannot launch graphical apps within desktop type: #{type.name}"
         end
         if !(@options.script.empty? || File.exists?(type.launch_script_path))
-          raise TypeOperationError, "can not launch scripts within desktop type: #{type.name}"
+          raise TypeOperationError, "cannot launch scripts within desktop type: #{type.name}"
         end
       end
     end
