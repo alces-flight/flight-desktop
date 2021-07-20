@@ -162,12 +162,22 @@ module Desktop
       end
     end
 
-    def start(geometry: Config.geometry)
+    # NOTE: There are two mechanisms for launching scripts:
+    # 1. Via subing the command into the 'session.sh' here, OR
+    # 2. By launching a graphical application
+    #
+    # Only the first method is supported within the 'start' command.
+    # Use the 'start_script' method to run the graphical version
+    def start(geometry: Config.geometry, script: nil)
+      raise InternalError, <<~ERROR.chomp if script && !type.singular_scriptable?
+        Unexpectedly failed to launch the script!
+      ERROR
+
       h = (Dir.home rescue '/')
       Dir.chdir(h) do
         CommandUtils.with_cleanest_env do
           create_password_file
-          install_session_script
+          install_session_script(script)
           start_vnc_server(geometry: geometry).tap do |started|
             if started
               start_websocket_server
@@ -430,8 +440,13 @@ module Desktop
       @session_dir_path ||= File.join(Config.session_path, uuid)
     end
 
-    def install_session_script
-      FileUtils.cp(type.session_script, session_dir_path)
+    def install_session_script(script)
+      content = if script
+        File.read(type.session_script).sub(/^#\s*flight_desktop_script=.*$/, "flight_desktop_script=\"#{script}\"")
+      else
+        File.read type.session_script
+      end
+      File.write(File.join(session_dir_path, 'session.sh'), content)
     end
 
     def create_password_file

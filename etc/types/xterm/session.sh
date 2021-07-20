@@ -24,6 +24,21 @@
 # For more information on Flight Desktop, please visit:
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
+
+# The following line *may* be patched with a command to be ran within the session
+# flight_desktop_script=()
+
+# Wrap the command in a "SHELL" script
+if [ -n "$command" ]; then
+  shell="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/shell.sh"
+  cat >"$shell" <<EOF
+#!/bin/bash
+echo "$flight_desktop_script"
+bash -c "$flight_desktop_script"
+EOF
+  chmod u+x "$shell"
+fi
+
 # 'Xterm*vt100.pointerMode: 0' is to ensure that the pointer does not
 # disappear when a user types into the xterm.  In this situation, some
 # VNC clients experience a 'freeze' due to a bug with handling
@@ -38,4 +53,12 @@ static char root_weave_bits[] = {
    0x07, 0x0d, 0x0b, 0x0e};
 EOF
 )
-xterm
+
+# Launch the command with the shell
+if [ -n "$shell" ]; then
+  xterm "$shell"
+
+# Launch without the shell
+else
+  xterm
+fi

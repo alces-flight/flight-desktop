@@ -40,6 +40,7 @@ module Desktop
       def run
         assert_functional
         assert_app_and_script_paths
+        assert_valid_apps_and_scripts
         if !type.verified?
           raise UnverifiedTypeError, "Desktop type '#{type.name}' has not been verified"
         else
@@ -53,7 +54,10 @@ module Desktop
               append_newline: false,
               status: status_text
             )
-            success = session.start(geometry: @options.geometry || Config.geometry)
+            success = session.start(
+              geometry: @options.geometry || Config.geometry,
+              script:   type.singular_scriptable? ? @options.script.first : nil
+            )
             start_apps(session)
             start_scripts(session)
             Whirly.stop
@@ -92,6 +96,7 @@ module Desktop
       end
 
       def start_scripts(session)
+        return if session.type.singular_scriptable?
         @options.script.each_with_index do |cmd, idx|
           parts = Shellwords.split(cmd)
           session.start_script(*parts, index: idx)
@@ -104,12 +109,34 @@ module Desktop
         end
       end
 
+      # Check the given command is valid syntactically
+      def assert_valid_apps_and_scripts
+        { app: @options.app, script: @options.script }.each do |type, commands|
+          commands.each do |command|
+            begin
+              Shellwords.split(command)
+            rescue ArgumentError
+              raise InputError, "The following #{type} contains invalid shell syntax:\n#{command}"
+            end
+          end
+        end
+      end
+
       def assert_app_and_script_paths
         if !(@options.app.empty? || File.exists?(type.launch_app_path))
           raise TypeOperationError, "cannot launch graphical apps within desktop type: #{type.name}"
         end
-        if !(@options.script.empty? || File.exists?(type.launch_script_path))
-          raise TypeOperationError, "cannot launch scripts within desktop type: #{type.name}"
+        case @options.script.length
+        when 0
+          # NOOP
+        when 1
+          unless type.scriptable?
+            raise TypeOperationError, "cannot launch scripts within desktop type: #{type.name}"
+          end
+        else
+          unless type.singular_scriptable?
+            raise TypeOperationError, "can only launch a single script within desktop type: #{type.name}"
+          end
         end
       end
     end
