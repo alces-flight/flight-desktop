@@ -29,7 +29,7 @@
 # flight_desktop_script=()
 
 # Wrap the command in a "SHELL" script
-if [ -n "$command" ]; then
+if [ -n "$flight_desktop_script" ]; then
   shell="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/shell.sh"
   cat >"$shell" <<EOF
 #!/bin/bash
