@@ -5,3 +5,4 @@ log
 vendor
 var
 etc/config.yml
+libexec/desktop/hooks/post-verify/*
