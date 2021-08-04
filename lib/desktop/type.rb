@@ -184,11 +184,10 @@ EOF
       FileUtils.mkdir_p(state_dir)
       if ctx[:missing].empty? && success
         File.write(File.join(state_dir, 'state.yml'), { verified: true }.to_yaml)
-        post_verify
         puts <<EOF
 
 Desktop type #{Paint[name, :cyan]} has been verified.
-
+#{post_verify ? "" : "However, errors occurred in the post-verification script(s).\n"}
 EOF
         true
       else
@@ -227,6 +226,7 @@ EOF
     private
 
     def post_verify
+      error = false
       Dir.glob(File.join(Config.hooks_dir, 'post-verify/*')).each do |path|
         # Skip scripts the user does not have read permission for
         # This is a poor-man's implementation of "admin only" scripts
@@ -235,9 +235,10 @@ EOF
         name = File.basename(path)
         @stage = "Post: #{name}"
         stage_start
-        run_script(path, "post-verify.#{name}")
+        error = true unless run_script(path, "post-verify.#{name}")
         stage_stop
       end
+      !error
     end
 
     def distro
