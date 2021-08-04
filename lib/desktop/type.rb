@@ -162,6 +162,7 @@ module Desktop
         puts <<EOF
 
 Desktop type #{Paint[name, :cyan]} has been prepared.
+#{post_verify ? "" : "However, errors occurred in the post-verification script(s).\n"}
 
 EOF
         true
@@ -233,7 +234,7 @@ EOF
         next unless File.readable?(path)
 
         name = File.basename(path)
-        @stage = "Post: #{name}"
+        @stage = "Post (verify): #{name}"
         stage_start
         error = true unless run_script(path, "post-verify.#{name}")
         stage_stop
