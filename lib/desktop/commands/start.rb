@@ -83,10 +83,6 @@ module Desktop
         @session ||= Session.new(type: type)
       end
 
-      def default_shell
-        @default_shell ||= Etc.getpwuid(Process.euid).shell
-      end
-
       def start_apps(session)
         @options.app.each_with_index do |cmd, idx|
           parts = Shellwords.split(cmd)
