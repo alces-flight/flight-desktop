@@ -119,30 +119,15 @@ module Desktop
       @dir = dir
       @arch = md[:arch] || []
       @hidden = (File.basename(dir)[0] == '.' || md[:hidden] || false)
-      if File.exists?(launch_script_path)
-        @singular_scriptable = false
-        @scriptable = true
-      else
-        @singular_scriptable = md[:scriptable]
-        @scriptable = md[:scriptable]
-      end
+      @scriptable = md[:scriptable]
     end
 
     def scriptable?
       @scriptable
     end
 
-    # Some session types, e.g., Terminal, support only a single script.
-    def singular_scriptable?
-      @singular_scriptable
-    end
-
     def launch_app_path
-      @launch_app_path ||= File.join(dir, 'launch-app.sh')
-    end
-
-    def launch_script_path
-      @launch_script_path ||= File.join(dir, 'launch-script.sh')
+      @launch_app_path ||= File.join(@dir, 'launch-app.sh')
     end
 
     def session_script

@@ -168,7 +168,7 @@ module Desktop
     # "xterm" and "terminal".  Full desktop sessions use a different mechanism
     # to launch scripts and apps; see `start_app` and `start_script`.
     def start(geometry: Config.geometry, script: nil)
-      raise InternalError, <<~ERROR.chomp if script && !type.singular_scriptable?
+      raise InternalError, <<~ERROR.chomp if script && !type.scriptable?
         Unexpectedly failed to launch the script!
       ERROR
 
@@ -346,18 +346,10 @@ module Desktop
       rc.success?
     end
 
-    def start_app(*args, **opts)
-      start_script(*args, **opts.merge(app: true))
-    end
-
-    def start_script(*args, index:, app: false)
-      # Log the app/script
-      tag = "#{(app ? 'app' : 'script')}.#{index}"
+    def start_app(*args, index:)
+      tag = "app.#{index}"
       log = File.join(dir, "#{tag}.log")
       File.write(log, "Running (#{tag}): #{args}")
-
-      # Determine the launch script
-      script = (app ? type.launch_app_path : type.launch_script_path)
 
       # Run the command
       CommandUtils.with_clean_env do
@@ -365,12 +357,11 @@ module Desktop
           exec(
             ENV.to_h.dup.merge({
               "DISPLAY" => ":#{display}",
-              # NOTE: Intentionally the same between app/script for consistency
               "flight_DESKTOP_SCRIPT_index" => index.to_s,
               "flight_DESKTOP_SCRIPT_id" => uuid.split(".").first
             }),
             'bash',
-            script,
+            type.launch_app_path,
             *args,
             [:out, :err] => [log, 'a']
           )

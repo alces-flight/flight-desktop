@@ -36,10 +36,7 @@ module Desktop
     PROGRAM_NAME = ENV.fetch('FLIGHT_PROGRAM_NAME','desktop')
     APP_TYPES = Type.all.values.select { |t| File.exist?(t.launch_app_path) }
                     .map(&:name).join(',')
-    SCRIPT_TYPES = Type.all.values.select { |t| t.scriptable? && !t.singular_scriptable? }
-                       .map(&:name).join(',')
-    SINGULAR_SCRIPT_TYPES = Type.all.values.select { |t| t.singular_scriptable? }
-                                .map(&:name).join(',')
+    SCRIPT_TYPES = Type.all.values.select { |t| t.scriptable?}.map(&:name).join(',')
 
     extend Commander::CLI
     program :application, "Flight Desktop"
@@ -164,8 +161,8 @@ EOF
     end
 
     APP_DESC = ERB.new(<<~TEMPLATE, nil, '-').result(binding).chomp
-Specify the binary/launch script for a graphical application. Multiple
-applications can be started by repeating the --app flag.
+Launch the given graphical application in the session.  Multiple applications
+can be started by repeating the --app flag.
 <% if APP_TYPES.empty? -%>
 
 Not supported by any install desktop types!
@@ -175,24 +172,14 @@ Supported by: #{APP_TYPES}
 TEMPLATE
 
     SCRIPT_DESC = ERB.new(<<~TEMPLATE, nil, '-').result(binding).chomp
-Start a script on the remote session. The behaviour of this flag depends
-on the selected desktop type.
-<%  if SCRIPT_TYPES.empty? && SINGULAR_SCRIPT_TYPES.empty? -%>
+Run the given script in a suitable terminal inside the session.  Only a single
+script can be ran.
+
+<%  if SCRIPT_TYPES.empty? -%>
 
 Not supported by any installed desktop types!
 <%  else -%>
-<%    unless SCRIPT_TYPES.empty? -%>
-
-Graphical sessions can launch multiple scripts by creating independent
-terminals. Mutliple scripts can be started by repeating the --script flag.
 Supported by: #{SCRIPT_TYPES}
-<%    end -%>
-<%    unless SINGULAR_SCRIPT_TYPES.empty? -%>
-
-Terminal sessions will launch the script in the foreground via a bash
-shell. Only a single script can be launch within these sessions.
-Supported by: #{SINGULAR_SCRIPT_TYPES}
-<%    end -%>
 <%  end -%>
 TEMPLATE
 
@@ -202,7 +189,7 @@ TEMPLATE
       c.action Commands, :start
       c.option '-g', '--geometry GEOMETRY', Geometry, 'Specify desktop geometry.'
       c.slop.array '-a', '--app', APP_DESC, delimiter: nil, meta: '"BINARY [ARGUMENTS...]"'
-      c.slop.array '-s', '--script', SCRIPT_DESC, delimiter: nil, meta: '"SCRIPT [ARGUMENTS...]"'
+      c.slop.string '-s', '--script', SCRIPT_DESC, delimiter: nil, meta: '"SCRIPT [ARGUMENTS...]"'
       c.description = <<EOF
 Start a new interactive desktop session and display details about the
 new session.

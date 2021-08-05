@@ -56,10 +56,9 @@ module Desktop
             )
             success = session.start(
               geometry: @options.geometry || Config.geometry,
-              script:   type.singular_scriptable? ? @options.script.first : nil
+              script:   @options.script,
             )
             start_apps(session)
-            start_scripts(session)
             Whirly.stop
           rescue
             puts "\u274c #{status_text}\n\n"
@@ -95,14 +94,6 @@ module Desktop
         end
       end
 
-      def start_scripts(session)
-        return if session.type.singular_scriptable?
-        @options.script.each_with_index do |cmd, idx|
-          parts = Shellwords.split(cmd)
-          session.start_script(*parts, index: idx)
-        end
-      end
-
       def assert_functional
         if !Config.functional?
           raise SessionOperationError, "system-level prerequisites not present"
@@ -111,7 +102,7 @@ module Desktop
 
       # Check the given command is valid syntactically
       def assert_valid_apps_and_scripts
-        { app: @options.app, script: @options.script }.each do |type, commands|
+        { app: @options.app, script: [@options.script].compact }.each do |type, commands|
           commands.each do |command|
             begin
               Shellwords.split(command)
@@ -123,20 +114,13 @@ module Desktop
       end
 
       def assert_app_and_script_paths
-        if !(@options.app.empty? || File.exists?(type.launch_app_path))
+        if !@options.app.empty? && !File.exists?(type.launch_app_path)
           raise TypeOperationError, "cannot launch graphical apps within desktop type: #{type.name}"
         end
-        case @options.script.length
-        when 0
-          # NOOP
-        when 1
-          unless type.scriptable?
-            raise TypeOperationError, "cannot launch scripts within desktop type: #{type.name}"
-          end
-        else
-          unless type.singular_scriptable?
-            raise TypeOperationError, "can only launch a single script within desktop type: #{type.name}"
-          end
+
+        script = @options.script
+        if !(script.nil? || !script.empty?) && !type.scriptable?
+          raise TypeOperationError, "cannot launch scripts within desktop type: #{type.name}"
         end
       end
     end
