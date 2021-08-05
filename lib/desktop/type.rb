@@ -119,6 +119,15 @@ module Desktop
       @dir = dir
       @arch = md[:arch] || []
       @hidden = (File.basename(dir)[0] == '.' || md[:hidden] || false)
+      @scriptable = md[:scriptable]
+    end
+
+    def scriptable?
+      @scriptable
+    end
+
+    def launch_app_path
+      @launch_app_path ||= File.join(@dir, 'launch-app.sh')
     end
 
     def session_script

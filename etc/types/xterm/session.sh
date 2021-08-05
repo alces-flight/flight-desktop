@@ -24,6 +24,11 @@
 # For more information on Flight Desktop, please visit:
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
+
+postInitScript="$1"
+shift
+postInitScriptArgs="$@"
+
 # 'Xterm*vt100.pointerMode: 0' is to ensure that the pointer does not
 # disappear when a user types into the xterm.  In this situation, some
 # VNC clients experience a 'freeze' due to a bug with handling
@@ -38,4 +43,9 @@ static char root_weave_bits[] = {
    0x07, 0x0d, 0x0b, 0x0e};
 EOF
 )
-xterm
+
+if [ -n "$postInitScript" ]; then
+  xterm -e "$postInitScript" "$postInitScriptArgs"
+else
+  xterm
+fi

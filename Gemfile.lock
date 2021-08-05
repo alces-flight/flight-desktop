@@ -14,12 +14,13 @@ GIT
 GEM
   remote: https://rubygems.org/
   specs:
-    commander-openflighthpc (1.1.0)
-      highline (~> 1.7.2)
+    commander-openflighthpc (2.2.0)
+      highline (> 1.7.2)
       paint (~> 2.1.0)
+      slop (~> 4.8)
     equatable (0.6.1)
     ffi (1.11.1)
-    highline (1.7.10)
+    highline (2.0.3)
     hpricot (0.8.6)
     mustache (1.1.0)
     necromancer (0.5.1)
@@ -32,6 +33,7 @@ GEM
       hpricot (>= 0.8.2)
       mustache (>= 0.7.0)
       rdiscount (>= 1.5.8)
+    slop (4.9.1)
     strings (0.1.8)
       strings-ansi (~> 0.1)
       unicode-display_width (~> 1.5)
@@ -66,7 +68,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  commander-openflighthpc (~> 1.1.0)
+  commander-openflighthpc (~> 2.2.0)
   flight_configuration!
   ronn
   sys-proctable

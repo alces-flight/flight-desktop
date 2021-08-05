@@ -32,13 +32,15 @@ require_relative '../session'
 require_relative '../type'
 
 require 'whirly'
+require 'shellwords'
 
 module Desktop
   module Commands
     class Start < Command
-
       def run
         assert_functional
+        assert_app_and_script_paths
+        assert_valid_apps_and_scripts
         if !type.verified?
           raise UnverifiedTypeError, "Desktop type '#{type.name}' has not been verified"
         else
@@ -52,7 +54,11 @@ module Desktop
               append_newline: false,
               status: status_text
             )
-            success = session.start(geometry: @options.geometry || Config.geometry)
+            success = session.start(
+              geometry: @options.geometry || Config.geometry,
+              script:   @options.script,
+            )
+            start_apps(session)
             Whirly.stop
           rescue
             puts "\u274c #{status_text}\n\n"
@@ -77,9 +83,40 @@ module Desktop
         @session ||= Session.new(type: type)
       end
 
+      def start_apps(session)
+        @options.app.each_with_index do |cmd, idx|
+          parts = Shellwords.split(cmd)
+          session.start_app(*parts, index: idx)
+        end
+      end
+
       def assert_functional
         if !Config.functional?
           raise SessionOperationError, "system-level prerequisites not present"
+        end
+      end
+
+      # Check the given command is valid syntactically
+      def assert_valid_apps_and_scripts
+        { app: @options.app, script: [@options.script].compact }.each do |type, commands|
+          commands.each do |command|
+            begin
+              Shellwords.split(command)
+            rescue ArgumentError
+              raise InputError, "The following #{type} contains invalid shell syntax:\n#{command}"
+            end
+          end
+        end
+      end
+
+      def assert_app_and_script_paths
+        if !@options.app.empty? && !File.exists?(type.launch_app_path)
+          raise TypeOperationError, "cannot launch graphical apps within desktop type: #{type.name}"
+        end
+
+        script = @options.script
+        if !(script.nil? || !script.empty?) && !type.scriptable?
+          raise TypeOperationError, "cannot launch scripts within desktop type: #{type.name}"
         end
       end
     end

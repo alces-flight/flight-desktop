@@ -33,4 +33,6 @@ module Desktop
   IncompleteTypeError = Class.new(RuntimeError)
   UnverifiedTypeError = Class.new(RuntimeError)
   InvalidSettingError = Class.new(RuntimeError)
+  InternalError = Class.new(RuntimeError)
+  InputError = Class.new(RuntimeError)
 end

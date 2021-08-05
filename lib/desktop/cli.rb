@@ -29,30 +29,22 @@ require_relative 'version'
 
 require 'tty/reader'
 require 'commander'
-require_relative 'patches/highline-ruby_27_compat'
+require 'erb'
 
 module Desktop
   module CLI
     PROGRAM_NAME = ENV.fetch('FLIGHT_PROGRAM_NAME','desktop')
+    APP_TYPES = Type.all.values.select { |t| File.exist?(t.launch_app_path) }
+                    .map(&:name).join(',')
+    SCRIPT_TYPES = Type.all.values.select { |t| t.scriptable?}.map(&:name).join(',')
 
-    extend Commander::Delegates
+    extend Commander::CLI
     program :application, "Flight Desktop"
     program :name, PROGRAM_NAME
     program :version, "v#{Desktop::VERSION}"
     program :description, 'Manage interactive GUI desktop sessions.'
     program :help_paging, false
     default_command :help
-    silent_trace!
-
-    error_handler do |runner, e|
-      case e
-      when TTY::Reader::InputInterrupt
-        $stderr.puts "\n#{Paint['WARNING', :underline, :yellow]}: Cancelled by user"
-        exit(130)
-      else
-        Commander::Runner::DEFAULT_ERROR_HANDLER.call(runner, e)
-      end
-    end
 
     if [/^xterm/, /rxvt/, /256color/].all? { |regex| ENV['TERM'] !~ regex }
       Paint.mode = 0
@@ -167,11 +159,37 @@ EOF
         raise 'invalid geometry string' if s !~ /^[0-9]+x[0-9]+$/
       end
     end
+
+    APP_DESC = ERB.new(<<~TEMPLATE, nil, '-').result(binding).chomp
+Launch the given graphical application in the session.  Multiple applications
+can be started by repeating the --app flag.
+<% if APP_TYPES.empty? -%>
+
+Not supported by any install desktop types!
+<% else -%>
+Supported by: #{APP_TYPES}
+<% end -%>
+TEMPLATE
+
+    SCRIPT_DESC = ERB.new(<<~TEMPLATE, nil, '-').result(binding).chomp
+Run the given script in a suitable terminal inside the session.  Only a single
+script can be ran.
+
+<%  if SCRIPT_TYPES.empty? -%>
+
+Not supported by any installed desktop types!
+<%  else -%>
+Supported by: #{SCRIPT_TYPES}
+<%  end -%>
+TEMPLATE
+
     command :start do |c|
       cli_syntax(c, '[TYPE]')
       c.summary = 'Start an interactive desktop session'
       c.action Commands, :start
       c.option '-g', '--geometry GEOMETRY', Geometry, 'Specify desktop geometry.'
+      c.slop.array '-a', '--app', APP_DESC, delimiter: nil, meta: '"BINARY [ARGUMENTS...]"'
+      c.slop.string '-s', '--script', SCRIPT_DESC, delimiter: nil, meta: '"SCRIPT [ARGUMENTS...]"'
       c.description = <<EOF
 Start a new interactive desktop session and display details about the
 new session.

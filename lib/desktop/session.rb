@@ -162,13 +162,22 @@ module Desktop
       end
     end
 
-    def start(geometry: Config.geometry)
+    # Start the session with the given geometry and run the given script.
+    #
+    # The script argument is supported for "basic" desktop sessions such as
+    # "xterm" and "terminal".  Full desktop sessions use a different mechanism
+    # to launch scripts and apps; see `start_app` and `start_script`.
+    def start(geometry: Config.geometry, script: nil)
+      raise InternalError, <<~ERROR.chomp if script && !type.scriptable?
+        Unexpectedly failed to launch the script!
+      ERROR
+
       h = (Dir.home rescue '/')
       Dir.chdir(h) do
         CommandUtils.with_cleanest_env do
           create_password_file
           install_session_script
-          start_vnc_server(geometry: geometry).tap do |started|
+          start_vnc_server(geometry: geometry, postinitscript: script).tap do |started|
             if started
               start_websocket_server
               start_grabber
@@ -267,7 +276,18 @@ module Desktop
       end
     end
 
-    def start_vnc_server(geometry: Config.geometry)
+    def start_vnc_server(geometry: Config.geometry, postinitscript: nil)
+      args = [
+        '-autokill',
+        '-sessiondir', dir,
+        '-sessionscript', File.join(dir, 'session.sh'),
+        '-vncpasswd', File.join(dir, 'password.dat'),
+        '-exedir', '/usr/bin',
+        '-geometry', geometry,
+      ]
+      if postinitscript
+        args << '-postinitscript' << postinitscript
+      end
       IO.popen(
         {}.tap do |h|
           h['flight_DESKTOP_type_root'] = type.dir
@@ -298,12 +318,7 @@ module Desktop
         end,
         [
           Config.vnc_server_program,
-          '-autokill',
-          '-sessiondir', dir,
-          '-sessionscript', File.join(dir, 'session.sh'),
-          '-vncpasswd', File.join(dir, 'password.dat'),
-          '-exedir', '/usr/bin',
-          '-geometry', geometry,
+          *args,
           {
             err: [:child, :out],
             unsetenv_others: Config.session_env_override
@@ -329,6 +344,30 @@ module Desktop
       end
       rc = $?
       rc.success?
+    end
+
+    def start_app(*args, index:)
+      tag = "app.#{index}"
+      log = File.join(dir, "#{tag}.log")
+      File.write(log, "Running (#{tag}): #{args}")
+
+      # Run the command
+      CommandUtils.with_clean_env do
+        pid = fork {
+          exec(
+            ENV.to_h.dup.merge({
+              "DISPLAY" => ":#{display}",
+              "flight_DESKTOP_SCRIPT_index" => index.to_s,
+              "flight_DESKTOP_SCRIPT_id" => uuid.split(".").first
+            }),
+            'bash',
+            type.launch_app_path,
+            *args,
+            [:out, :err] => [log, 'a']
+          )
+        }
+        Process.detach(pid)
+      end
     end
 
     def active?
