@@ -32,13 +32,15 @@ module Desktop
   module Commands
     class Set < Command
       def run
+        hash = {}
         if args.any?
-          if options.global && !Config.data_writable?
+          if options.global && !File.writable?(Flight.config.class.global_config)
             raise InvalidSettingError, "permission denied for updating global defaults"
           end
           updates = []
           args.each do |a|
             k, v = a.split('=')
+            hash[k] = v
             raise InvalidSettingError, "missing value: #{a}" if v.nil?
             case k
             when 'desktop'
@@ -55,8 +57,8 @@ module Desktop
           end
           updates.each(&:call)
         end
-        puts "Default desktop type: #{Config.desktop_type.name}"
-        puts "    Default geometry: #{Config.geometry}"
+        puts "Default desktop type: #{hash.fetch('desktop', Type.default.name)}"
+        puts "    Default geometry: #{hash.fetch('geometry', Config.geometry)}"
       end
     end
   end

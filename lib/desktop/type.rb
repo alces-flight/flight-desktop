@@ -80,18 +80,20 @@ module Desktop
       end
 
       def default
-        all.values.find { |t| t.default == true } || all.values.first || Type.new({name: 'default'}, '/tmp')
+        type = nil
+        begin
+          type = Type[Flight.config.desktop_type] if Flight.config.desktop_type
+        rescue UnknownDesktopTypeError
+          # NOOP
+        end
+        type || all.values.find { |t| t.default == true } || \
+                all.values.first || \
+                Type.new({name: 'default'}, '/tmp')
       end
 
       def set_default(type_name, global: false)
         self[type_name].tap do |t|
-          if global
-            Config.data.set(:desktop_type, value: t.name)
-            Config.save_data
-          else
-            Config.user_data.set(:desktop_type, value: t.name)
-            Config.save_user_data
-          end
+          Flight.config.save_key('desktop_type', t.name, global: global)
         end
       end
     end
@@ -99,6 +101,11 @@ module Desktop
     attr_reader :name
     attr_reader :summary
     attr_reader :url
+    # NOTE: This 'default' key is a misnomer. It is not necessarily the default type.
+    # Instead it flags the type *could* be the default if flight-desktop hasn't otherwise
+    # been configured with one.
+    #
+    # See Type.default for the actual default desktop for the current user.
     attr_reader :default
     attr_reader :arch
     attr_reader :hidden

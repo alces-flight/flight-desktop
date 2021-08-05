@@ -26,224 +26,46 @@
 # ==============================================================================
 require_relative 'type'
 require 'xdg'
-require 'tty-config'
 require 'fileutils'
 
+require 'flight_configuration'
+
+module Flight
+  def self.config
+    @config ||= Desktop::Configuration.load
+  end
+
+  def self.env
+    @env ||= 'production'
+  end
+
+  def self.root
+    @root ||= File.expand_path('../..', __dir__)
+  end
+end
+
 module Desktop
-  module Config
+  class Configuration
+    extend FlightConfiguration::DSL
+
     class << self
-      DESKTOP_DIR_SUFFIX = File.join('flight','desktop')
-
-      def data
-        @data ||= TTY::Config.new.tap do |cfg|
-          cfg.append_path(File.join(root, 'etc'))
-          begin
-            cfg.read
-          rescue TTY::Config::ReadError
-            nil
-          end
-        end
+      # Override the config files to use the legacy paths
+      def config_files(*_)
+        @config_files ||= [global_config, user_config]
       end
 
-      def save_data
-        FileUtils.mkdir_p(File.join(root, 'etc'))
-        data.write(force: true)
+      def global_config
+        @global_config ||= Pathname.new('../../etc/config.yml').expand_path(__dir__)
       end
 
-      def data_writable?
-        File.writable?(File.join(root, 'etc'))
+      def user_config
+        @user_config ||= desktop_path.join('config.yml').expand_path(xdg_config.home)
       end
 
-      def user_data
-        @user_data ||= TTY::Config.new.tap do |cfg|
-          xdg_config.all.map do |p|
-            File.join(p, DESKTOP_DIR_SUFFIX)
-          end.each(&cfg.method(:append_path))
-          begin
-            cfg.read
-          rescue TTY::Config::ReadError
-            nil
-          end
-        end
+      def desktop_path
+        @desktop_path ||= Pathname.new('flight/desktop')
       end
 
-      def save_user_data
-        FileUtils.mkdir_p(
-          File.join(
-            xdg_config.home,
-            DESKTOP_DIR_SUFFIX
-          )
-        )
-        user_data.write(force: true)
-      end
-
-      def root
-        @root ||= File.expand_path(File.join(__dir__, '..', '..'))
-      end
-
-      def session_path
-        @session_path ||= File.join(xdg_cache.home, DESKTOP_DIR_SUFFIX, 'sessions')
-      end
-
-      def user_state_path
-        @user_state_path ||= File.join(xdg_data.home, DESKTOP_DIR_SUFFIX, 'state')
-      end
-
-      def user_log_path
-        @user_log_path ||= File.join(xdg_cache.home, DESKTOP_DIR_SUFFIX, 'log')
-      end
-
-      def global_state_path
-        @global_state_path ||= File.expand_path(
-          data.fetch(
-            :global_state_path,
-            default: 'var/lib/desktop'
-          ),
-          Config.root
-        )
-      end
-
-      def global_log_path
-        @global_log_path ||= File.expand_path(
-          data.fetch(
-            :global_log_path,
-            default: 'var/log/desktop'
-          ),
-          Config.root
-        )
-      end
-
-      def vnc_passwd_program
-        @vnc_passwd_program ||=
-          data.fetch(
-            :vnc_passwd_program,
-            default: '/usr/bin/vncpasswd'
-          )
-      end
-
-      def vnc_server_program
-        @vnc_server_program ||=
-          File.expand_path(
-            data.fetch(
-              :vnc_server_program,
-              default: File.join('libexec','vncserver')
-            ),
-            Config.root
-          )
-      end
-
-      def functional?
-        File.executable?(vnc_passwd_program) &&
-          File.executable?(vnc_server_program)
-      end
-
-      def websockify_paths
-        @websockify_paths ||=
-          data.fetch(
-            :websockify_paths,
-            default: [
-              '/usr/bin/websockify'
-            ]
-          ).map {|p| File.expand_path(p, Config.root)}
-      end
-
-      def type_paths
-        @type_paths ||=
-          data.fetch(
-            :type_paths,
-            default: [
-              'etc/types'
-            ]
-          ).map {|p| File.expand_path(p, Config.root)}
-      end
-
-      def access_hosts
-        data.fetch(
-          :access_hosts,
-          default: []
-        )
-      end
-
-      def access_ip
-        data.fetch(
-          :access_ip,
-          default: NetworkUtils.primary_ip
-        )
-      end
-
-      def access_host
-        data.fetch(
-          :access_host,
-          default: access_ip
-        )
-      end
-
-      def geometry
-        user_data.fetch(
-          :geometry,
-          default: data.fetch(
-            :geometry,
-            default: '1024x768'
-          )
-        )
-      end
-
-      def set_geometry(geometry, global: false)
-        raise 'invalid geometry string' if geometry !~ /^[0-9]+x[0-9]+$/
-        if global
-          Config.data.set(:geometry, value: geometry)
-          Config.save_data
-        else
-          Config.user_data.set(:geometry, value: geometry)
-          Config.save_user_data
-        end
-      end
-
-      def desktop_type
-        type_name =
-          user_data.fetch(
-            :desktop_type,
-            default: data.fetch(
-              :desktop_type
-            )
-          )
-        (type_name && Type[type_name] rescue nil) || Type.default
-      end
-
-      def bg_image
-        @bg_image ||=
-          user_data.fetch(
-            :bg_image,
-            default: data.fetch(
-              :bg_image,
-              default: 'etc/assets/backgrounds/default.jpg'
-            )
-          )
-      end
-
-      def session_env_path
-        @session_env_path ||=
-          user_data.fetch(
-            :session_env_path,
-            default: data.fetch(
-              :session_env_path,
-              default: '/usr/bin:/usr/sbin:/bin:/sbin'
-            )
-          )
-      end
-
-      def session_env_override
-        @session_env_override ||=
-          user_data.fetch(
-            :session_env_override,
-            default: data.fetch(
-              :session_env_override,
-              default: true
-            )
-          )
-      end
-
-      private
       def xdg_config
         @xdg_config ||= XDG::Config.new
       end
@@ -254,6 +76,92 @@ module Desktop
 
       def xdg_cache
         @xdg_cache ||= XDG::Cache.new
+      end
+    end
+
+    application_name 'desktop'
+
+    attribute :vnc_passwd_program, default: '/usr/bin/vncpasswd'
+    attribute :vnc_server_program, default: 'libexec/vncserver',
+              transform: relative_to(root_path)
+
+    # TODO: Validate it is an [String]
+    attribute :type_paths, default: ['etc/types'], transform: ->(paths) do
+      paths.each { |p| File.expand_path(Flight.root) }
+    end
+    attribute :websockify_paths, default: ['/usr/bin/websockify'], transform: ->(paths) do
+      paths.each { |p| File.expand_path(Flight.root) }
+    end
+    attribute :session_path, default: desktop_path.join('sessions'),
+              transform: relative_to(xdg_cache.home)
+    attribute :bg_image, default: 'etc/assets/backgrounds/default.jpg',
+              transform: relative_to(root_path)
+
+    attribute :access_hosts, default: []
+    attribute :access_ip, required: false, defualt: ->() { NetworkUtils.primary_ip }
+    attribute :access_host, required: false
+
+    attribute :global_state_path, default: 'var/lib/desktop',
+              transform: relative_to(root_path)
+    attribute :user_state_path, default: desktop_path.join('state'),
+              transform: relative_to(xdg_data.home)
+
+    attribute :session_env_path, default: '/usr/bin:/usr/sbin:/bin:/sbin'
+    attribute :session_env_override, default: true
+
+    attribute :geometry, default: '1024x768'
+    attribute :desktop_type, required: false
+
+    attribute :global_log_path, default: 'log/desktop', transform: relative_to(root_path)
+    attribute :user_log_path, default: 'log/desktop', transform: relative_to(xdg_cache.home)
+
+    # NOTE: flight_configuration does not have support for transient dependencies
+    # between attributes. Instead a wrapper method is required.
+    def access_host_or_ip
+      access_host || access_ip
+    end
+
+    def save_key(key, value, global:)
+      # Load the existing data
+      path = global ? self.class.global_config : self.class.user_config
+      if File.exists?(path)
+        # Ensure all keys are loaded as symbols
+        data = YAML.load(File.read(path), symbolize_names: true)
+      else
+        data = {}
+      end
+
+      # Update the data
+      data[key.to_sym] = value
+
+      # Ensure all keys are saved as strings
+      data = data.map { |k, v| [k.to_s, v] }.to_h
+      FileUtils.mkdir_p File.dirname(path)
+      File.write(path, YAML.dump(data))
+    end
+  end
+
+  module Config
+    class << self
+      DESKTOP_DIR_SUFFIX = File.join('flight','desktop')
+
+      # Define the Configuration delegates
+      Configuration.attributes.each do |key, _|
+        define_method(key) { Flight.config.send(key) }
+      end
+
+      def root
+        Flight.root
+      end
+
+      def functional?
+        File.executable?(vnc_passwd_program) &&
+          File.executable?(vnc_server_program)
+      end
+
+      def set_geometry(geometry, global: false)
+        raise 'invalid geometry string' if geometry !~ /^[0-9]+x[0-9]+$/
+        Flight.config.save_key('geometry', geometry, global: global)
       end
     end
   end

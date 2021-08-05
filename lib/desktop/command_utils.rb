@@ -207,7 +207,7 @@ virtual private network (VPN).
 However, #{Paint["we highly recommend that you access your desktop session using
 'ssh' port forwarding",:underline]}:
 
-  #{Paint["ssh -L #{session.port}:#{session.ip}:#{session.port} #{ENV['USER']}@#{Config.access_host}",:green]}
+  #{Paint["ssh -L #{session.port}:#{session.ip}:#{session.port} #{ENV['USER']}@#{Flight.config.access_host_or_ip}",:green]}
 
 #{general}
 EOF
@@ -218,7 +218,7 @@ cluster as it is running on a machine that only provides internal
 cluster access.  #{Paint["In order to access your desktop session you will need
 to perform port forwarding using 'ssh'",:underline]}:
 
-  #{Paint["ssh -L #{session.port}:#{session.ip}:#{session.port} #{ENV['USER']}@#{Config.access_host}",:green]}
+  #{Paint["ssh -L #{session.port}:#{session.ip}:#{session.port} #{ENV['USER']}@#{Flight.config.access_host_or_ip}",:green]}
 
 #{general}
 EOF
