@@ -162,12 +162,11 @@ module Desktop
       end
     end
 
-    # NOTE: There are two mechanisms for launching scripts:
-    # 1. Via subing the command into the 'session.sh' here, OR
-    # 2. By launching a graphical application
+    # Start the session with the given geometry and run the given script.
     #
-    # Only the first method is supported within the 'start' command.
-    # Use the 'start_script' method to run the graphical version
+    # The script argument is supported for "basic" desktop sessions such as
+    # "xterm" and "terminal".  Full desktop sessions use a different mechanism
+    # to launch scripts and apps; see `start_app` and `start_script`.
     def start(geometry: Config.geometry, script: nil)
       raise InternalError, <<~ERROR.chomp if script && !type.singular_scriptable?
         Unexpectedly failed to launch the script!
@@ -177,8 +176,8 @@ module Desktop
       Dir.chdir(h) do
         CommandUtils.with_cleanest_env do
           create_password_file
-          install_session_script(script)
-          start_vnc_server(geometry: geometry).tap do |started|
+          install_session_script
+          start_vnc_server(geometry: geometry, postinitscript: script).tap do |started|
             if started
               start_websocket_server
               start_grabber
@@ -277,7 +276,18 @@ module Desktop
       end
     end
 
-    def start_vnc_server(geometry: Config.geometry)
+    def start_vnc_server(geometry: Config.geometry, postinitscript: nil)
+      args = [
+        '-autokill',
+        '-sessiondir', dir,
+        '-sessionscript', File.join(dir, 'session.sh'),
+        '-vncpasswd', File.join(dir, 'password.dat'),
+        '-exedir', '/usr/bin',
+        '-geometry', geometry,
+      ]
+      if postinitscript
+        args << '-postinitscript' << postinitscript
+      end
       IO.popen(
         {}.tap do |h|
           h['flight_DESKTOP_type_root'] = type.dir
@@ -308,12 +318,7 @@ module Desktop
         end,
         [
           Config.vnc_server_program,
-          '-autokill',
-          '-sessiondir', dir,
-          '-sessionscript', File.join(dir, 'session.sh'),
-          '-vncpasswd', File.join(dir, 'password.dat'),
-          '-exedir', '/usr/bin',
-          '-geometry', geometry,
+          *args,
           {
             err: [:child, :out],
             unsetenv_others: Config.session_env_override
@@ -440,13 +445,8 @@ module Desktop
       @session_dir_path ||= File.join(Config.session_path, uuid)
     end
 
-    def install_session_script(script)
-      content = if script
-        File.read(type.session_script).sub(/^#\s*flight_desktop_script=.*$/, "flight_desktop_script=\"#{script}\"")
-      else
-        File.read type.session_script
-      end
-      File.write(File.join(session_dir_path, 'session.sh'), content)
+    def install_session_script
+      FileUtils.cp(type.session_script, session_dir_path)
     end
 
     def create_password_file

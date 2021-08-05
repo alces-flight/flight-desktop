@@ -25,19 +25,9 @@
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
 
-# The following line *may* be patched with a command to be ran within the session
-# flight_desktop_script=()
-
-# Wrap the command in a "SHELL" script
-if [ -n "$flight_desktop_script" ]; then
-  shell="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/shell.sh"
-  cat >"$shell" <<EOF
-#!/bin/bash
-echo "$flight_desktop_script"
-bash -c "$flight_desktop_script"
-EOF
-  chmod u+x "$shell"
-fi
+postInitScript="$1"
+shift
+postInitScriptArgs="$@"
 
 # 'Xterm*vt100.pointerMode: 0' is to ensure that the pointer does not
 # disappear when a user types into the xterm.  In this situation, some
@@ -54,11 +44,8 @@ static char root_weave_bits[] = {
 EOF
 )
 
-# Launch the command with the shell
-if [ -n "$shell" ]; then
-  xterm "$shell"
-
-# Launch without the shell
+if [ -n "$postInitScript" ]; then
+  xterm -e "$postInitScript" "$postInitScriptArgs"
 else
   xterm
 fi

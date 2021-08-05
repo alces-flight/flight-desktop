@@ -87,7 +87,7 @@ if ($fontPath eq "") {
 
 &ParseOptions("-geometry",1,"-depth",1,"-pixelformat",1,"-name",1,"-kill",0,
               "-help",0,"-h",0,"--help",0,"-fp",1,"-fg",0,"-autokill",0,"-vncpasswd",1,
-              "-sessionscript",1,"-sessiondir",1,"-exedir",1);
+              "-sessionscript",1,"-sessiondir",1,"-exedir",1,"-postinitscript",1);
 
 &Usage() if ($opt{'-help'} || $opt{'-h'} || $opt{'--help'});
 
@@ -126,6 +126,11 @@ if ($opt{'-exedir'}) {
     $exedir = "$opt{'-exedir'}/";
 } else {
     $exedir = "/usr/bin/";
+}
+if ($opt{'-postinitscript'}) {
+    $postInitScript = "$opt{'-postinitscript'}";
+} else {
+    $postInitScript = "";
 }
 
 &SanityCheck();
@@ -241,7 +246,8 @@ if (-e "/tmp/.X11-unix/X$displayNumber" ||
 $ENV{VNCDESKTOP}= $desktopName;
 
 if ($opt{'-fg'}) {
-    my @args = ("/bin/bash","-c","$sessionScript >> " . &quotedString($sessionLog) . " 2>&1");
+    my @args = ("/bin/bash","-c","$sessionScript $postInitScript >> " . &quotedString($sessionLog) . " 2>&1");
+    print @args;
     system(@args);
     if (kill 0, `cat $pidFile`) {
         $opt{'-kill'} = ':'.$displayNumber;
@@ -249,11 +255,13 @@ if ($opt{'-fg'}) {
     }
 } else {
     if ($opt{'-autokill'}) {
-        my @args = ("/bin/bash","-c","(/bin/bash $sessionScript; $0 -sessiondir $sessionDir -kill) >> "
+        my @args = ("/bin/bash","-c","(/bin/bash $sessionScript $postInitScript; $0 -sessiondir $sessionDir -kill) >> "
                     . &quotedString($sessionLog) . " 2>&1 &");
+    print @args;
         system(@args);
     } else {
-        my @args = ("/bin/bash","-c","$sessionScript >> " . &quotedString($sessionLog) . " 2>&1 &");
+        my @args = ("/bin/bash","-c","$sessionScript $postInitScript >> " . &quotedString($sessionLog) . " 2>&1 &");
+    print @args;
         system(@args);
     }
 }

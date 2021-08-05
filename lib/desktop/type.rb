@@ -132,8 +132,7 @@ module Desktop
       @scriptable
     end
 
-    # Terminal session patch their script command into 'session.sh'
-    # This limits them to running a single script
+    # Some session types, e.g., Terminal, support only a single script.
     def singular_scriptable?
       @singular_scriptable
     end
