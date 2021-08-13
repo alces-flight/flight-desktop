@@ -114,8 +114,7 @@ module Desktop
           raise TypeOperationError, "cannot launch graphical apps within desktop type: #{type.name}"
         end
 
-        script = @options.script
-        if !(script.nil? || !script.empty?) && !type.scriptable?
+        if @options.script && !type.scriptable?
           raise TypeOperationError, "cannot launch scripts within desktop type: #{type.name}"
         end
       end
