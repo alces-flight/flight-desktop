@@ -155,15 +155,20 @@ module Desktop
 
     def prepare(force: false)
       return true if !force && verified?
+
+      was_verified = verified?
       puts "Preparing desktop type #{Paint[name, :cyan]}:\n\n"
       if run_script(File.join(@dir, prepare_script), 'prepare')
         FileUtils.mkdir_p(global_state_dir)
         File.write(File.join(state_dir, 'state.yml'), { verified: true }.to_yaml)
+        post_verify_errors = was_verified ? false : !run_post_verify_script
+        post_verify_log = File.join(log_dir, "#{name}.post-verify.log")
+
+
         puts <<EOF
 
 Desktop type #{Paint[name, :cyan]} has been prepared.
-#{post_verify ? "" : "However, errors occurred in the post-verification script(s).\n"}
-
+#{post_verify_errors ? "However, errors occurred in the post-verification script; see #{post_verify_log}\n" : ''}
 EOF
         true
       else
@@ -177,6 +182,8 @@ EOF
 
     def verify(force: false)
       return true if !force && verified?
+
+      was_verified = verified?
       puts "Verifying desktop type #{Paint[name, :cyan]}:\n\n"
       ctx = {
         missing: []
@@ -185,10 +192,13 @@ EOF
       FileUtils.mkdir_p(state_dir)
       if ctx[:missing].empty? && success
         File.write(File.join(state_dir, 'state.yml'), { verified: true }.to_yaml)
+        post_verify_errors = was_verified ? false : !run_post_verify_script
+        post_verify_log = File.join(log_dir, "#{name}.post-verify.log")
+
         puts <<EOF
 
 Desktop type #{Paint[name, :cyan]} has been verified.
-#{post_verify ? "" : "However, errors occurred in the post-verification script(s).\n"}
+#{post_verify_errors ? "However, errors occurred in the post-verification script; see #{post_verify_log}\n" : ''}
 EOF
         true
       else
@@ -226,20 +236,14 @@ EOF
 
     private
 
-    def post_verify
-      error = false
-      Dir.glob(File.join(Config.hooks_dir, 'post-verify/*')).each do |path|
-        # Skip scripts the user does not have read permission for
-        # This is a poor-man's implementation of "admin only" scripts
-        next unless File.readable?(path)
-
-        name = File.basename(path)
-        @stage = "Post (verify): #{name}"
-        stage_start
-        error = true unless run_script(path, "post-verify.#{name}")
+    def run_post_verify_script
+      script = File.join(Config.hooks_dir, 'post-verify')
+      return true unless File.executable?(script)
+      @stage = "Running post verification script"
+      stage_start
+      run_script(script, 'post-verify').tap do |r|
         stage_stop
       end
-      !error
     end
 
     def distro
