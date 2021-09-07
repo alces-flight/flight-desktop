@@ -155,14 +155,20 @@ module Desktop
 
     def prepare(force: false)
       return true if !force && verified?
+
+      was_verified = verified?
       puts "Preparing desktop type #{Paint[name, :cyan]}:\n\n"
       if run_script(File.join(@dir, prepare_script), 'prepare')
         FileUtils.mkdir_p(global_state_dir)
         File.write(File.join(state_dir, 'state.yml'), { verified: true }.to_yaml)
+        post_verify_errors = !run_post_verify_script(was_verified, verified?)
+        post_verify_log = File.join(log_dir, "#{name}.post-verify.log")
+
+
         puts <<EOF
 
 Desktop type #{Paint[name, :cyan]} has been prepared.
-
+#{post_verify_errors ? "However, errors occurred in the post-verification script; see #{post_verify_log}\n" : ''}
 EOF
         true
       else
@@ -176,22 +182,29 @@ EOF
 
     def verify(force: false)
       return true if !force && verified?
+
+      was_verified = verified?
       puts "Verifying desktop type #{Paint[name, :cyan]}:\n\n"
       ctx = {
         missing: []
       }
-      success = run_script(File.join(@dir, verify_script), 'verify', ctx)
+      success = run_script(File.join(@dir, verify_script), 'verify', context: ctx)
       FileUtils.mkdir_p(state_dir)
       if ctx[:missing].empty? && success
         File.write(File.join(state_dir, 'state.yml'), { verified: true }.to_yaml)
+        post_verify_errors = !run_post_verify_script(was_verified, verified?)
+        post_verify_log = File.join(log_dir, "#{name}.post-verify.log")
+
         puts <<EOF
 
 Desktop type #{Paint[name, :cyan]} has been verified.
-
+#{post_verify_errors ? "However, errors occurred in the post-verification script; see #{post_verify_log}\n" : ''}
 EOF
         true
       else
         File.write(File.join(state_dir, 'state.yml'), { verified: false }.to_yaml)
+        post_verify_errors = !run_post_verify_script(was_verified, verified?)
+        post_verify_log = File.join(log_dir, "#{name}.post-verify.log")
         puts <<EOF
 
 Desktop type #{Paint[name, :cyan]} has missing prerequisites:
@@ -219,11 +232,30 @@ cluster administrator using the 'prepare' command, i.e.:
 
 EOF
         end
+        if post_verify_errors
+          puts <<EOF
+Errors occurred in the post-verification script; see #{post_verify_log}
+
+EOF
+        end
         false
       end
     end
 
     private
+
+    def run_post_verify_script(was_verified, is_verified)
+      return true if was_verified == is_verified
+      script = File.join(Config.hooks_dir, 'post-verify')
+      return true unless File.executable?(script)
+      @stage = "Running post verification script"
+      args = [is_verified ? 'verified' : 'unverified']
+      stage_start
+      run_script(script, 'post-verify', args: args).tap do |r|
+        stage_stop
+      end
+    end
+
     def distro
       if File.exists?('/etc/redhat-release')
         'rhel'
@@ -326,7 +358,7 @@ EOF
 #      h['BASH_FUNC_desktop_echo()'] = "() { flight_desktop_comms DATA \"$@\"\necho \"$@\"\n}"
     end
 
-    def run_script(script, op, context = {})
+    def run_script(script, op, context: {}, args: [])
       if File.exists?(script)
         CommandUtils.with_clean_env do
           run_fork(context) do |wr|
@@ -342,7 +374,7 @@ EOF
               '/bin/bash',
               '-x',
               script,
-              name,
+              *[name] + args,
               close_others: false,
               [:out, :err] => [log_file ,'w']
             )

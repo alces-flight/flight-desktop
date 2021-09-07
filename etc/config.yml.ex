@@ -8,6 +8,8 @@
 #global_log_path: var/log/desktop
 # Global setting for default desktop type
 #desktop_type: gnome
+# Directory containing the hooks scripts
+#hooks_dir: libexec/desktop/hooks
 # Global setting for default geometry
 #geometry: 1024x768
 # Background image to use for (some) desktop types
