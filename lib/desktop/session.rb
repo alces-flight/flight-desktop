@@ -167,7 +167,11 @@ module Desktop
     # The script argument is supported for "basic" desktop sessions such as
     # "xterm" and "terminal".  Full desktop sessions use a different mechanism
     # to launch scripts and apps; see `start_app` and `start_script`.
-    def start(geometry: Config.geometry, script: nil)
+    #
+    # The `no_env_override` argument, when true, disables the blanking of
+    # the session's environment, allowing the environment to persist when
+    # starting the session from Flight Job.
+    def start(geometry: Config.geometry, script: nil, no_env_override: false)
       raise InternalError, <<~ERROR.chomp if script && !type.scriptable?
         Unexpectedly failed to launch the script!
       ERROR
@@ -177,7 +181,11 @@ module Desktop
         CommandUtils.with_cleanest_env do
           create_password_file
           install_session_script
-          start_vnc_server(geometry: geometry, postinitscript: script).tap do |started|
+          start_vnc_server(
+	    geometry: geometry,
+	    postinitscript: script,
+	    no_env_override: no_env_override
+	  ).tap do |started|
             if started
               start_websocket_server
               start_grabber
@@ -276,7 +284,7 @@ module Desktop
       end
     end
 
-    def start_vnc_server(geometry: Config.geometry, postinitscript: nil)
+    def start_vnc_server(geometry: Config.geometry, postinitscript: nil, no_env_override: false)
       args = [
         '-autokill',
         '-sessiondir', dir,
@@ -288,6 +296,7 @@ module Desktop
       if postinitscript
         args << '-postinitscript' << postinitscript
       end
+      override_env = Config.session_env_override && !no_env_override
       IO.popen(
         {}.tap do |h|
           h['flight_DESKTOP_type_root'] = type.dir
@@ -309,7 +318,7 @@ module Desktop
           # `flight_DESKTOP_type_root and flight_DESKTOP_bg_image
           # directly; as done above.
           h['flight_DESKTOP_root'] = Config.root
-          if Config.session_env_override
+          if override_env
             h['USER'] = ENV['USER']
             h['HOME'] = ENV['HOME']
             h['LANG'] = ENV['LANG']
@@ -321,7 +330,7 @@ module Desktop
           *args,
           {
             err: [:child, :out],
-            unsetenv_others: Config.session_env_override
+            unsetenv_others: override_env
           }
         ]
       ) do |io|
