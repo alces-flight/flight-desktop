@@ -182,10 +182,10 @@ module Desktop
           create_password_file
           install_session_script
           start_vnc_server(
-	    geometry: geometry,
-	    postinitscript: script,
-	    no_env_override: no_env_override
-	  ).tap do |started|
+            geometry: geometry,
+            postinitscript: script,
+            no_env_override: no_env_override
+          ).tap do |started|
             if started
               start_websocket_server
               start_grabber
