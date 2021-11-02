@@ -299,7 +299,7 @@ module Desktop
       if postinitscript
         args << '-postinitscript' << postinitscript
       end
-      override_env_bool = override_env || Config.session_env_override && !no_env_override
+      env_override = override_env || !no_override_env && Config.session_env_override
       IO.popen(
         {}.tap do |h|
           h['flight_DESKTOP_type_root'] = type.dir
@@ -321,7 +321,7 @@ module Desktop
           # `flight_DESKTOP_type_root and flight_DESKTOP_bg_image
           # directly; as done above.
           h['flight_DESKTOP_root'] = Config.root
-          if override_env_bool
+          if env_override
             h['USER'] = ENV['USER']
             h['HOME'] = ENV['HOME']
             h['LANG'] = ENV['LANG']
@@ -333,7 +333,7 @@ module Desktop
           *args,
           {
             err: [:child, :out],
-            unsetenv_others: override_env_bool
+            unsetenv_others: env_override
           }
         ]
       ) do |io|
