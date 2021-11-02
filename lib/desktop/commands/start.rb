@@ -57,7 +57,8 @@ module Desktop
             success = session.start(
               geometry: @options.geometry || Config.geometry,
               script:   @options.script,
-              no_env_override: @options.no_env_override
+              override_env: @options.override_env,
+              no_override_env: @options.override_env
             )
             start_apps(session)
             Whirly.stop
