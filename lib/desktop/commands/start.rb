@@ -58,7 +58,7 @@ module Desktop
               geometry: @options.geometry || Config.geometry,
               script:   @options.script,
               override_env: @options.override_env,
-              no_override_env: @options.override_env
+              no_override_env: @options.no_override_env
             )
             start_apps(session)
             Whirly.stop
