@@ -188,6 +188,8 @@ TEMPLATE
       c.summary = 'Start an interactive desktop session'
       c.action Commands, :start
       c.option '-g', '--geometry GEOMETRY', Geometry, 'Specify desktop geometry.'
+      c.option '--override-env', "Blank the session environment (takes precedence over --no-override-env)."
+      c.option '--no-override-env', "Don't blank the session environment."
       c.slop.array '-a', '--app', APP_DESC, delimiter: nil, meta: '"BINARY [ARGUMENTS...]"'
       c.slop.string '-s', '--script', SCRIPT_DESC, delimiter: nil, meta: '"SCRIPT [ARGUMENTS...]"'
       c.description = <<EOF

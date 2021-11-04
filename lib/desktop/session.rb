@@ -167,7 +167,12 @@ module Desktop
     # The script argument is supported for "basic" desktop sessions such as
     # "xterm" and "terminal".  Full desktop sessions use a different mechanism
     # to launch scripts and apps; see `start_app` and `start_script`.
-    def start(geometry: Config.geometry, script: nil)
+    #
+    # The `override_env` argument, when true, causes the session's
+    # environment to be blanked upon starting. When false, the environment
+    # of the host machine is allowed to propagate through to the guest session,
+    # something that is important when starting sessions via Flight Job.
+    def start(geometry: Config.geometry, script: nil, override_env: true)
       raise InternalError, <<~ERROR.chomp if script && !type.scriptable?
         Unexpectedly failed to launch the script!
       ERROR
@@ -177,7 +182,11 @@ module Desktop
         CommandUtils.with_cleanest_env do
           create_password_file
           install_session_script
-          start_vnc_server(geometry: geometry, postinitscript: script).tap do |started|
+          start_vnc_server(
+            geometry: geometry,
+            postinitscript: script,
+            override_env: override_env
+          ).tap do |started|
             if started
               start_websocket_server
               start_grabber
@@ -276,7 +285,7 @@ module Desktop
       end
     end
 
-    def start_vnc_server(geometry: Config.geometry, postinitscript: nil)
+    def start_vnc_server(geometry: Config.geometry, postinitscript: nil, override_env: true)
       args = [
         '-autokill',
         '-sessiondir', dir,
@@ -309,7 +318,7 @@ module Desktop
           # `flight_DESKTOP_type_root and flight_DESKTOP_bg_image
           # directly; as done above.
           h['flight_DESKTOP_root'] = Config.root
-          if Config.session_env_override
+          if override_env
             h['USER'] = ENV['USER']
             h['HOME'] = ENV['HOME']
             h['LANG'] = ENV['LANG']
@@ -321,7 +330,7 @@ module Desktop
           *args,
           {
             err: [:child, :out],
-            unsetenv_others: Config.session_env_override
+            unsetenv_others: override_env
           }
         ]
       ) do |io|
