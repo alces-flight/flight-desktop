@@ -168,12 +168,11 @@ module Desktop
     # "xterm" and "terminal".  Full desktop sessions use a different mechanism
     # to launch scripts and apps; see `start_app` and `start_script`.
     #
-    # The `no_override_env` argument, when true, disables the blanking of
-    # the session's environment, allowing the environment to persist when
-    # starting the session from Flight Job. Similarly, the `override_env`
-    # argument forces environment overriding, regardless of config settings
-    # or the presence of `no_override_env`.
-    def start(geometry: Config.geometry, script: nil, no_override_env: false, override_env: false)
+    # The `override_env` argument, when true, causes the session's
+    # environment to be blanked upon starting. When false, the environment
+    # of the host machine is allowed to propagate through to the guest session,
+    # something that is important when starting sessions via Flight Job.
+    def start(geometry: Config.geometry, script: nil, override_env: true)
       raise InternalError, <<~ERROR.chomp if script && !type.scriptable?
         Unexpectedly failed to launch the script!
       ERROR
@@ -186,7 +185,6 @@ module Desktop
           start_vnc_server(
             geometry: geometry,
             postinitscript: script,
-            no_override_env: no_override_env,
             override_env: override_env
           ).tap do |started|
             if started
@@ -287,7 +285,7 @@ module Desktop
       end
     end
 
-    def start_vnc_server(geometry: Config.geometry, postinitscript: nil, no_override_env: false, override_env: false)
+    def start_vnc_server(geometry: Config.geometry, postinitscript: nil, override_env: true)
       args = [
         '-autokill',
         '-sessiondir', dir,
@@ -299,7 +297,6 @@ module Desktop
       if postinitscript
         args << '-postinitscript' << postinitscript
       end
-      env_override = override_env || !no_override_env && Config.session_env_override
       IO.popen(
         {}.tap do |h|
           h['flight_DESKTOP_type_root'] = type.dir
@@ -321,7 +318,7 @@ module Desktop
           # `flight_DESKTOP_type_root and flight_DESKTOP_bg_image
           # directly; as done above.
           h['flight_DESKTOP_root'] = Config.root
-          if env_override
+          if override_env
             h['USER'] = ENV['USER']
             h['HOME'] = ENV['HOME']
             h['LANG'] = ENV['LANG']
@@ -333,7 +330,7 @@ module Desktop
           *args,
           {
             err: [:child, :out],
-            unsetenv_others: env_override
+            unsetenv_others: override_env
           }
         ]
       ) do |io|
