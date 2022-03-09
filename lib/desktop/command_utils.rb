@@ -105,6 +105,7 @@ EOF
           puts "Created At\t#{session.created_at.strftime("%Y-%m-%dT%T%z")}"
           puts "Last Accessed At\t#{session.last_accessed_at&.strftime("%Y-%m-%dT%T%z").to_s}"
           puts "Screenshot Path\t#{File.join(session.dir, 'session.png')}"
+          puts "IPs\t#{session.ips.join("|")}"
         end
       end
 
