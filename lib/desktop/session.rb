@@ -108,6 +108,10 @@ module Desktop
       @ip ||= NetworkUtils.primary_ip
     end
 
+    def ips
+      @ips ||= NetworkUtils.ips
+    end
+
     def method_missing(s, *a, &b)
       if @metadata.key?(s)
         @metadata[s]
@@ -412,6 +416,7 @@ module Desktop
       @type = Type[metadata[:type]]
       @password = metadata[:password]
       @ip = metadata[:ip]
+      @ips = metadata[:ips] || []
       @websocket_port = metadata[:websocket_port] || 0
       @websocket_pid = metadata[:websocket_pid]
       @host_name = metadata[:host_name]
@@ -428,6 +433,7 @@ module Desktop
         type: @type.name,
         password: password,
         ip: ip,
+        ips: ips,
         host_name: host_name,
         created_at: created_at.strftime("%Y-%m-%dT%T%z")
       }.tap do |md|
