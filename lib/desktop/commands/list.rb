@@ -65,7 +65,8 @@ module Desktop
                   s.local? ? (s.active? ? 'Active' : 'Exited') : 'Remote',
                   s.created_at.strftime("%Y-%m-%dT%T%z"),
                   s.last_accessed_at&.strftime("%Y-%m-%dT%T%z").to_s,
-                  File.join(s.dir, 'session.png')
+                  File.join(s.dir, 'session.png'),
+                  s.ips.join("|"),
                 ]
               end
             puts a.join("\t")
@@ -74,6 +75,7 @@ module Desktop
       end
 
       private
+
       def session_to_array(s)
         if s.state == :broken
           [
