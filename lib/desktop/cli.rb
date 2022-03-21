@@ -192,6 +192,7 @@ TEMPLATE
       c.option '--no-override-env', "Don't blank the session environment."
       c.slop.array '-a', '--app', APP_DESC, delimiter: nil, meta: '"BINARY [ARGUMENTS...]"'
       c.slop.string '-s', '--script', SCRIPT_DESC, delimiter: nil, meta: '"SCRIPT [ARGUMENTS...]"'
+      c.option '--kill-on-script-exit', "Exit the desktop session when the script given by --script exits."
       c.description = <<EOF
 Start a new interactive desktop session and display details about the
 new session.

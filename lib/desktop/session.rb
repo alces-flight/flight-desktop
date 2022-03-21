@@ -176,7 +176,12 @@ module Desktop
     # environment to be blanked upon starting. When false, the environment
     # of the host machine is allowed to propagate through to the guest session,
     # something that is important when starting sessions via Flight Job.
-    def start(geometry: Config.geometry, script: nil, override_env: true)
+    def start(
+      geometry: Config.geometry,
+      kill_on_script_exit: false,
+      override_env: true,
+      script: nil
+    )
       raise InternalError, <<~ERROR.chomp if script && !type.scriptable?
         Unexpectedly failed to launch the script!
       ERROR
@@ -188,8 +193,9 @@ module Desktop
           install_session_script
           start_vnc_server(
             geometry: geometry,
-            postinitscript: script,
-            override_env: override_env
+            kill_on_script_exit: kill_on_script_exit,
+            override_env: override_env,
+            post_init_script: script,
           ).tap do |started|
             if started
               start_websocket_server
@@ -289,7 +295,12 @@ module Desktop
       end
     end
 
-    def start_vnc_server(geometry: Config.geometry, postinitscript: nil, override_env: true)
+    def start_vnc_server(
+      geometry: Config.geometry,
+      kill_on_script_exit: false,
+      override_env: true,
+      post_init_script: nil
+    )
       args = [
         '-autokill',
         '-sessiondir', dir,
@@ -298,8 +309,9 @@ module Desktop
         '-exedir', '/usr/bin',
         '-geometry', geometry,
       ]
-      if postinitscript
-        args << '-postinitscript' << postinitscript
+      if post_init_script
+        args << '-postinitscript' << post_init_script
+        args << '-killonscriptexit' if kill_on_script_exit
       end
       IO.popen(
         {}.tap do |h|

@@ -41,6 +41,7 @@ module Desktop
         assert_functional
         assert_app_and_script_paths
         assert_valid_apps_and_scripts
+        assert_options_sane
         if !type.verified?
           raise UnverifiedTypeError, "Desktop type '#{type.name}' has not been verified"
         else
@@ -57,6 +58,7 @@ module Desktop
             success = session.start(
               geometry: @options.geometry || Config.geometry,
               script:   @options.script,
+              kill_on_script_exit: @options.kill_on_script_exit,
               override_env: @options.override_env ||
                               !@options.no_override_env &&
                               Config.session_env_override
@@ -90,6 +92,12 @@ module Desktop
         @options.app.each_with_index do |cmd, idx|
           parts = Shellwords.split(cmd)
           session.start_app(*parts, index: idx)
+        end
+      end
+
+      def assert_options_sane
+        if @options.kill_on_script_exit && !@options.script
+          raise InputError, "--kill-on-script-exit can only be given if --script is given."
         end
       end
 
