@@ -315,6 +315,7 @@ module Desktop
       end
       IO.popen(
         {}.tap do |h|
+          h['flight_DESKTOP_id'] = uuid
           h['flight_DESKTOP_type_root'] = type.dir
           h['flight_DESKTOP_bg_image'] = Config.bg_image
           h['flight_DESKTOP_geometry'] = geometry
