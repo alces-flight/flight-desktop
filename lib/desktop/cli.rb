@@ -30,6 +30,7 @@ require_relative 'version'
 require 'tty/reader'
 require 'commander'
 require 'erb'
+require '/code/flight-desktop/lib/desktop/patches/geometry_option.rb'
 
 module Desktop
   module CLI
@@ -100,7 +101,7 @@ EOF
       cli_syntax(c)
       c.summary = 'Perform diagnostics and display results'
       c.action Commands, :doctor
-      c.option '--json', 'Output machine readable response in JSON format'
+      c.slop.bool '--json', 'Output machine readable response in JSON format'
       c.description = <<EOF
 Perform a series of diagnostics regarding available functionality and
 display the results.
@@ -153,13 +154,6 @@ EOF
     end
     alias_command :k, :kill
 
-    Geometry = Class.new
-    OptionParser.accept(Geometry) do |geom_str|
-      geom_str.tap do |s|
-        raise 'invalid geometry string' if s !~ /^[0-9]+x[0-9]+$/
-      end
-    end
-
     APP_DESC = ERB.new(<<~TEMPLATE, nil, '-').result(binding).chomp
 Launch the given graphical application in the session.  Multiple applications
 can be started by repeating the --app flag.
@@ -187,12 +181,13 @@ TEMPLATE
       cli_syntax(c, '[TYPE]')
       c.summary = 'Start an interactive desktop session'
       c.action Commands, :start
-      c.option '-g', '--geometry GEOMETRY', Geometry, 'Specify desktop geometry.'
-      c.option '--override-env', "Blank the session environment (takes precedence over --no-override-env)."
-      c.option '--no-override-env', "Don't blank the session environment."
+      c.slop.string '-n', '--name', "Give the desktop session a name so it can be more easily identified.", delimiter: nil, meta: 'NAME'
+      c.slop.geometry '-g', '--geometry', 'Specify desktop geometry.'
+      c.slop.bool '--override-env', "Blank the session environment (takes precedence over --no-override-env)."
+      c.slop.bool '--no-override-env', "Don't blank the session environment."
       c.slop.array '-a', '--app', APP_DESC, delimiter: nil, meta: '"BINARY [ARGUMENTS...]"'
       c.slop.string '-s', '--script', SCRIPT_DESC, delimiter: nil, meta: '"SCRIPT [ARGUMENTS...]"'
-      c.option '--kill-on-script-exit', "Exit the desktop session when the script given by --script exits."
+      c.slop.bool '--kill-on-script-exit', "Exit the desktop session when the script given by --script exits."
       c.description = <<EOF
 Start a new interactive desktop session and display details about the
 new session.
@@ -228,7 +223,7 @@ EOF
       cli_syntax(c, '[NAME=VALUE...]')
       c.summary = 'Set or display default settings'
       c.action Commands, :set
-      c.option '-g', '--global', 'Set global default'
+      c.slop.bool '-g', '--global', 'Set global default'
       c.description = <<EOF
 Update or display current defaults.
 
@@ -248,7 +243,7 @@ EOF
         cli_syntax(c, 'TYPE')
         c.summary = 'Prepare a desktop type for use'
         c.action Commands, :prepare
-        c.option '-f', '--force', 'Prepare even if type has already been verified.'
+        c.slop.bool '-f', '--force', 'Prepare even if type has already been verified.'
         c.description = <<EOF
 Prepare a desktop type for use on this system.  This command is only
 available to the superuser as installing prerequisites for a desktop
@@ -266,7 +261,7 @@ EOF
       cli_syntax(c, 'TYPE')
       c.summary = 'Verify prerequisites are met for a desktop type'
       c.action Commands, :verify
-      c.option '-f', '--force', 'Verify even if type has already been verified.'
+      c.slop.bool '-f', '--force', 'Verify even if type has already been verified.'
       c.description = <<EOF
 Verify that a desktop type can be used on this system.  Desktop types
 must be verified before they can be used to ensure that their

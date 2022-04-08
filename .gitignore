@@ -6,3 +6,5 @@ vendor
 var
 etc/config.yml
 libexec/desktop/hooks/*
+*.swp
+*.swo
