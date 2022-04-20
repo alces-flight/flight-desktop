@@ -181,8 +181,7 @@ module Desktop
       geometry: Config.geometry,
       kill_on_script_exit: false,
       override_env: true,
-      script: nil,
-      name: nil
+      script: nil
     )
       raise InternalError, <<~ERROR.chomp if script && !type.scriptable?
         Unexpectedly failed to launch the script!
