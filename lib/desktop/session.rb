@@ -428,6 +428,7 @@ module Desktop
     def load
       metadata = YAML.load_file(metadata_file)
       @metadata = metadata[:metadata]
+      @name = metadata[:name]
       @type = Type[metadata[:type]]
       @password = metadata[:password]
       @ip = metadata[:ip]

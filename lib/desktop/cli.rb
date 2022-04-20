@@ -181,7 +181,7 @@ TEMPLATE
       cli_syntax(c, '[TYPE]')
       c.summary = 'Start an interactive desktop session'
       c.action Commands, :start
-      c.slop.string '-n', '--name', "Give the desktop session a name so it can be more easily identified.", delimiter: nil, meta: 'NAME'
+      c.slop.string '-n', '--name', "Give the desktop session a name so it can be more easily identified.", meta: 'NAME'
       c.slop.geometry '-g', '--geometry', 'Desktop geometry.', meta: 'WIDTHxHEIGHT', default: Config.geometry
       c.slop.bool '--override-env', "Blank the session environment (unset with --no-override-env).", default: !!Config.session_env_override
       c.slop.array '-a', '--app', APP_DESC, delimiter: nil, meta: '"BINARY [ARGUMENTS...]"'
