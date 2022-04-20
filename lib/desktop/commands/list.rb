@@ -80,7 +80,7 @@ module Desktop
       def session_to_array(s)
         if s.state == :broken
           [
-            s.name,
+            '',
             (s.uuid.split('-').first rescue nil),
             '',
             '',
