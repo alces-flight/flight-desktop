@@ -30,7 +30,7 @@ require_relative 'version'
 require 'tty/reader'
 require 'commander'
 require 'erb'
-require '/code/flight-desktop/lib/desktop/patches/geometry_option.rb'
+require_relative 'patches/geometry_option'
 
 module Desktop
   module CLI
