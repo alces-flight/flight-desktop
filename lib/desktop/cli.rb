@@ -182,9 +182,8 @@ TEMPLATE
       c.summary = 'Start an interactive desktop session'
       c.action Commands, :start
       c.slop.string '-n', '--name', "Give the desktop session a name so it can be more easily identified.", delimiter: nil, meta: 'NAME'
-      c.slop.geometry '-g', '--geometry', 'Specify desktop geometry.'
-      c.slop.bool '--override-env', "Blank the session environment (takes precedence over --no-override-env)."
-      c.slop.bool '--no-override-env', "Don't blank the session environment."
+      c.slop.geometry '-g', '--geometry', 'Desktop geometry.', meta: 'WIDTHxHEIGHT', default: Config.geometry
+      c.slop.bool '--override-env', "Blank the session environment (unset with --no-override-env).", default: !!Config.session_env_override
       c.slop.array '-a', '--app', APP_DESC, delimiter: nil, meta: '"BINARY [ARGUMENTS...]"'
       c.slop.string '-s', '--script', SCRIPT_DESC, delimiter: nil, meta: '"SCRIPT [ARGUMENTS...]"'
       c.slop.bool '--kill-on-script-exit', "Exit the desktop session when the script given by --script exits."

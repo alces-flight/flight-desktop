@@ -56,12 +56,10 @@ module Desktop
               status: status_text
             )
             success = session.start(
-              geometry: @options.geometry || Config.geometry,
+              geometry: @options.geometry,
               script:   @options.script,
               kill_on_script_exit: @options.kill_on_script_exit,
-              override_env: @options.override_env ||
-                              !@options.no_override_env &&
-                              Config.session_env_override
+              override_env: @options.override_env
             )
             start_apps(session)
             Whirly.stop
