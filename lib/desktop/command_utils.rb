@@ -81,7 +81,7 @@ EOF
           puts <<EOF
 
 == #{Paint["Session details",:bright]} ==
-
+      #{Paint['Name:','#2794d8']} #{Paint[session.name, :green]}      
   #{Paint['Identity:','#2794d8']} #{Paint[session.uuid, :green]}
       #{Paint['Type:','#2794d8']} #{Paint[session.type.name, :green]}
    #{Paint['Host IP:','#2794d8']} #{Paint[session.ip, :green]}
@@ -106,6 +106,7 @@ EOF
           puts "Last Accessed At\t#{session.last_accessed_at&.strftime("%Y-%m-%dT%T%z").to_s}"
           puts "Screenshot Path\t#{File.join(session.dir, 'session.png')}"
           puts "IPs\t#{session.ips.join("|")}"
+          puts "Name\t#{session.name}"
         end
       end
 

@@ -83,7 +83,7 @@ module Desktop
       end
 
       def session
-        @session ||= Session.new(type: type)
+        @session ||= Session.new(type: type, name: @options.name)
       end
 
       def start_apps(session)

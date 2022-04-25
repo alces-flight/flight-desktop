@@ -78,9 +78,9 @@ module Desktop
       end
     end
 
-    attr_reader :uuid, :type, :metadata, :host_name, :state, :websocket_port, :created_at, :last_accessed_at
+    attr_reader :uuid, :type, :metadata, :host_name, :state, :websocket_port, :created_at, :last_accessed_at, :name
 
-    def initialize(uuid: nil, type: nil)
+    def initialize(uuid: nil, type: nil, name: nil)
       if uuid.nil?
         @uuid = SecureRandom.uuid
         @type = type
@@ -88,6 +88,7 @@ module Desktop
         @host_name = Socket.gethostname.split('.')[0]
         @state = :new
         @created_at = Time.now
+        @name = name
       else
         @uuid = uuid
         begin
@@ -426,6 +427,7 @@ module Desktop
     def load
       metadata = YAML.load_file(metadata_file)
       @metadata = metadata[:metadata]
+      @name = metadata[:name]
       @type = Type[metadata[:type]]
       @password = metadata[:password]
       @ip = metadata[:ip]
@@ -448,7 +450,8 @@ module Desktop
         ip: ip,
         ips: ips,
         host_name: host_name,
-        created_at: created_at.strftime("%Y-%m-%dT%T%z")
+        created_at: created_at.strftime("%Y-%m-%dT%T%z"),
+        name: name
       }.tap do |md|
         if websocket_port != 0
           md[:websocket_port] = websocket_port

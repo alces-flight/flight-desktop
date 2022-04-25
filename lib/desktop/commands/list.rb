@@ -38,7 +38,7 @@ module Desktop
           else
             session_to_array = method(:session_to_array)
             Table.emit do |t|
-              headers 'Identity', 'Type', 'Host name', 'IP address', 'Display (Port)', 'Password', 'State'
+              headers 'Name', 'Identity', 'Type', 'Host name', 'IP address', 'Display (Port)', 'Password', 'State'
               Session.each do |s|
                 row(*session_to_array.call(s))
               end
@@ -67,6 +67,7 @@ module Desktop
                   s.last_accessed_at&.strftime("%Y-%m-%dT%T%z").to_s,
                   File.join(s.dir, 'session.png'),
                   s.ips.join("|"),
+                  s.name,
                 ]
               end
             puts a.join("\t")
@@ -79,6 +80,7 @@ module Desktop
       def session_to_array(s)
         if s.state == :broken
           [
+            '',
             (s.uuid.split('-').first rescue nil),
             '',
             '',
@@ -89,6 +91,7 @@ module Desktop
           ]
         else
           [
+            s.name,
             s.uuid.split('-').first,
             s.type.name,
             s.host_name,
