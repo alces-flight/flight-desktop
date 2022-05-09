@@ -126,6 +126,18 @@ a display number prefixed with ':', e.g. ':1'.
 EOF
     end
 
+    command :rename do |c|
+      cli_syntax(c, 'DESKTOP NAME')
+      c.summary = 'Rename a desktop session'
+      c.action Commands, :rename
+      c.description = <<EOF
+Name or rename a desktop session.
+
+The DESKTOP parameter should either specify the session identity or
+a display number prefixed with ':', e.g. ':1'.
+EOF
+    end
+
     command :list do |c|
       cli_syntax(c)
       c.summary = 'List interactive desktop sessions'

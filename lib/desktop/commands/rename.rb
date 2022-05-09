@@ -24,43 +24,22 @@
 # For more information on Flight Desktop, please visit:
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
-require_relative 'commands/avail'
-require_relative 'commands/clean'
-require_relative 'commands/doctor'
-require_relative 'commands/kill'
-require_relative 'commands/list'
-require_relative 'commands/prepare'
-require_relative 'commands/rename'
-require_relative 'commands/set'
-require_relative 'commands/show'
-require_relative 'commands/start'
-require_relative 'commands/verify'
-require_relative 'commands/webify'
+#require_relative '../session'
+require_relative 'show'
 
 module Desktop
   module Commands
-    class << self
-      def method_missing(s, *a, &b)
-        if clazz = to_class(s)
-          clazz.new(*a).run!
-        else
-          raise 'command not defined'
-        end
+    class Rename < Show
+      def run
+        session.name = new_name
+        session.save
+        puts "Desktop #{Paint[session.uuid.split('-').first, :cyan]} renamed to #{Paint[new_name, :green]}"
       end
 
-      def respond_to_missing?(s)
-        !!to_class(s)
-      end
-
-      private
-      def to_class(s)
-        s.to_s.split('-').reduce(self) do |clazz, p|
-          p.gsub!(/_(.)/) {|a| a[1].upcase}
-          clazz.const_get(p[0].upcase + p[1..-1])
-        end
-      rescue NameError
-        nil
+      def new_name
+        args[1]
       end
     end
+
   end
 end

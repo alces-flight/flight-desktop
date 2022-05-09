@@ -78,7 +78,8 @@ module Desktop
       end
     end
 
-    attr_reader :uuid, :type, :metadata, :host_name, :state, :websocket_port, :created_at, :last_accessed_at, :name
+    attr_reader :uuid, :type, :metadata, :host_name, :state, :websocket_port, :created_at, :last_accessed_at
+    attr_accessor :name
 
     def initialize(uuid: nil, type: nil, name: nil)
       if uuid.nil?
@@ -408,6 +409,27 @@ module Desktop
       ip == NetworkUtils.primary_ip
     end
 
+    def save
+      {
+        metadata: @metadata,
+        type: @type.name,
+        password: password,
+        ip: ip,
+        ips: ips,
+        host_name: host_name,
+        created_at: created_at.strftime("%Y-%m-%dT%T%z"),
+        name: name
+      }.tap do |md|
+        if websocket_port != 0
+          md[:websocket_port] = websocket_port
+          md[:websocket_pid] = @websocket_pid
+        end
+        File.open(metadata_file, 'w') do |io|
+          io.write(md.to_yaml)
+        end
+      end
+    end
+
     private
     def allocate_websocket_port
       free_port = (@metadata[:display] || 0).to_i + 41360
@@ -440,27 +462,6 @@ module Desktop
                             File.ctime File.join(dir, 'session.log')
                           end
       @created_at = determine_created_at
-    end
-
-    def save
-      {
-        metadata: @metadata,
-        type: @type.name,
-        password: password,
-        ip: ip,
-        ips: ips,
-        host_name: host_name,
-        created_at: created_at.strftime("%Y-%m-%dT%T%z"),
-        name: name
-      }.tap do |md|
-        if websocket_port != 0
-          md[:websocket_port] = websocket_port
-          md[:websocket_pid] = @websocket_pid
-        end
-        File.open(metadata_file, 'w') do |io|
-          io.write(md.to_yaml)
-        end
-      end
     end
 
     def session_dir_path
