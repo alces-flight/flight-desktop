@@ -25,10 +25,13 @@
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
 require_relative '../command'
+require_relative '../session_finder'
 
 module Desktop
   module Commands
     class Clean < Command
+      include Concerns::SessionFinder
+
       def run
         if session
           clean(session)
@@ -44,26 +47,6 @@ module Desktop
       end
 
       private
-      def uuid
-        @uuid ||= args[0][0] == ':' ? nil : args[0]
-      end
-
-      def display
-        @display ||= args[0][0] == ':' ? args[0][1..-1] : nil
-      end
-
-      def session
-        @session ||=
-          if args[0]
-            if uuid
-              Session[uuid]
-            elsif display
-              Session.find_by_display(display, include_exited: true)
-            end.tap do |s|
-              raise SessionNotFoundError, "unknown local session: #{args[0]}" if s.nil?
-            end
-          end
-      end
 
       def clean(target)
         if !target.local?

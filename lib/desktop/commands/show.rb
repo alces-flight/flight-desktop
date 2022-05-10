@@ -27,32 +27,15 @@
 require_relative '../command'
 require_relative '../command_utils'
 require_relative '../session'
+require_relative '../session_finder'
 
 module Desktop
   module Commands
     class Show < Command
+      include Concerns::SessionFinder
+
       def run
         CommandUtils.emit_details(session, :access_details)
-      end
-
-      private
-
-      def uuid
-        @uuid ||= args[0][0] == ':' ? nil : args[0]
-      end
-
-      def display
-        @display ||= args[0][0] == ':' ? args[0][1..-1] : nil
-      end
-
-      def session
-        @session ||=
-          if uuid
-            Session[uuid]
-          else
-            Session.find_by_display(display, include_exited: true) ||
-              raise(SessionNotFoundError, "no local active session found for display :#{display}")
-          end
       end
     end
   end

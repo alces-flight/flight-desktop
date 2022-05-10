@@ -24,23 +24,31 @@
 # For more information on Flight Desktop, please visit:
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
-require_relative '../session_finder'
-
 module Desktop
   module Commands
-    class Rename < Command
-      include Concerns::SessionFinder
+    module Concerns
+      module SessionFinder
+        def uuid
+          @uuid ||= args[0][0] == ':' ? nil : args[0]
+        end
 
-      def run
-        session.name = new_name
-        session.save
-        puts "Desktop session #{Paint[session.uuid.split('-').first, :magenta]} has been renamed #{Paint[new_name, :green]}"
-      end
+        def display
+          @display ||= args[0][0] == ':' ? args[0][1..-1] : nil
+        end
 
-      def new_name
-        args[1]
+        def session
+          @session ||=
+            if args[0]
+              if uuid
+                Session[uuid]
+              elsif display
+                Session.find_by_display(display, include_exited: true)
+              end.tap do |s|
+                raise SessionNotFoundError, "no local active session found for display :#{display}" if s.nil?
+              end
+            end
+        end
       end
     end
-
   end
 end

@@ -26,12 +26,15 @@
 # ==============================================================================
 require_relative '../command'
 require_relative '../session'
+require_relative '../session_finder'
 
 require 'whirly'
 
 module Desktop
   module Commands
     class Kill < Command
+      include Concerns::SessionFinder
+
       def run
         if session.active?
           puts "Killing desktop session #{Paint[session.uuid, :magenta]}:\n\n"
@@ -61,25 +64,6 @@ module Desktop
         else
           raise SessionOperationError, "session #{session.uuid} is not local"
         end
-      end
-
-      private
-      def uuid
-        @uuid ||= args[0][0] == ':' ? nil : args[0]
-      end
-
-      def display
-        @display ||= args[0][0] == ':' ? args[0][1..-1] : nil
-      end
-
-      def session
-        @session ||=
-          if uuid
-            Session[uuid]
-          else
-            Session.find_by_display(display) ||
-              raise(SessionNotFoundError, "no local active session found for display :#{display}")
-          end
       end
     end
   end
