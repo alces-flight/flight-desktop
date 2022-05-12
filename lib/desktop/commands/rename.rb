@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright (C) 2019-present Alces Flight Ltd.
+# Copyright (C) 2022-present Alces Flight Ltd.
 #
 # This file is part of Flight Desktop.
 #
@@ -24,47 +24,23 @@
 # For more information on Flight Desktop, please visit:
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
-require_relative '../command'
-require_relative '../session'
 require_relative '../session_finder'
-
-require 'whirly'
 
 module Desktop
   module Commands
-    class Kill < Command
+    class Rename < Command
       include Concerns::SessionFinder
 
       def run
-        if session.active?
-          puts "Killing desktop session #{Paint[session.uuid, :magenta]}:\n\n"
-          status_text = Paint["Terminating session", '#2794d8']
-          print "   > "
-          begin
-            Whirly.start(
-              spinner: 'star',
-              remove_after_stop: true,
-              append_newline: false,
-              status: status_text
-            )
-            success = session.kill
-            Whirly.stop
-          rescue
-            puts "\u274c #{status_text}\n\n"
-            raise
-          end
-          puts "#{success ? "\u2705" : "\u274c"} #{status_text}\n\n"
-          if success
-            puts "Desktop session '#{Paint[session.uuid, :magenta]}' has been terminated.\n\n"
-          else
-            raise SessionOperationError, "unable to terminate session"
-          end
-        elsif session.local?
-          raise SessionOperationError, "session #{session.uuid} is not active"
-        else
-          raise SessionOperationError, "session #{session.uuid} is not local"
-        end
+        session.name = new_name
+        session.save
+        puts "Desktop session #{Paint[session.uuid.split('-').first, :magenta]} has been renamed #{Paint[new_name, :green]}"
+      end
+
+      def new_name
+        args[1]
       end
     end
+
   end
 end

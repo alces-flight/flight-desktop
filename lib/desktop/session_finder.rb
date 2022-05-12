@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright (C) 2019-present Alces Flight Ltd.
+# Copyright (C) 2022-present Alces Flight Ltd.
 #
 # This file is part of Flight Desktop.
 #
@@ -24,42 +24,30 @@
 # For more information on Flight Desktop, please visit:
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
-require_relative 'commands/avail'
-require_relative 'commands/clean'
-require_relative 'commands/doctor'
-require_relative 'commands/kill'
-require_relative 'commands/list'
-require_relative 'commands/prepare'
-require_relative 'commands/rename'
-require_relative 'commands/set'
-require_relative 'commands/show'
-require_relative 'commands/start'
-require_relative 'commands/verify'
-require_relative 'commands/webify'
-
 module Desktop
   module Commands
-    class << self
-      def method_missing(s, *a, &b)
-        if clazz = to_class(s)
-          clazz.new(*a).run!
-        else
-          raise 'command not defined'
+    module Concerns
+      module SessionFinder
+        def uuid
+          @uuid ||= args[0][0] == ':' ? nil : args[0]
         end
-      end
 
-      def respond_to_missing?(s)
-        !!to_class(s)
-      end
-
-      private
-      def to_class(s)
-        s.to_s.split('-').reduce(self) do |clazz, p|
-          p.gsub!(/_(.)/) {|a| a[1].upcase}
-          clazz.const_get(p[0].upcase + p[1..-1])
+        def display
+          @display ||= args[0][0] == ':' ? args[0][1..-1] : nil
         end
-      rescue NameError
-        nil
+
+        def session
+          @session ||=
+            if args[0]
+              if uuid
+                Session[uuid]
+              elsif display
+                Session.find_by_display(display, include_exited: true)
+              end.tap do |s|
+                raise SessionNotFoundError, "no local active session found for display :#{display}" if s.nil?
+              end
+            end
+        end
       end
     end
   end
