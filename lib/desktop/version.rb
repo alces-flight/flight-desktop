@@ -25,5 +25,5 @@
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
 module Desktop
-  VERSION = '1.10.0-rc2'
+  VERSION = '1.10.0'
 end
