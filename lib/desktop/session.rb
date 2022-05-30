@@ -78,7 +78,7 @@ module Desktop
       end
     end
 
-    attr_reader :uuid, :type, :metadata, :host_name, :state, :websocket_port, :created_at, :last_accessed_at
+    attr_reader :uuid, :type, :metadata, :host_name, :state, :websocket_port, :created_at, :last_accessed_at, :job_id
     attr_accessor :name
 
     def initialize(uuid: nil, type: nil, name: nil)
@@ -90,6 +90,7 @@ module Desktop
         @state = :new
         @created_at = Time.now
         @name = name
+        @job_id = ENV['FLIGHT_JOB_ID']
       else
         @uuid = uuid
         begin
@@ -418,11 +419,15 @@ module Desktop
         ips: ips,
         host_name: host_name,
         created_at: created_at.strftime("%Y-%m-%dT%T%z"),
-        name: name
+        name: name,
+        supplementary: {},
       }.tap do |md|
         if websocket_port != 0
           md[:websocket_port] = websocket_port
           md[:websocket_pid] = @websocket_pid
+        end
+        md[:supplementary].tap do |smd|
+          smd[:job_id] = job_id if job_id
         end
         File.open(metadata_file, 'w') do |io|
           io.write(md.to_yaml)
@@ -462,6 +467,7 @@ module Desktop
                             File.ctime File.join(dir, 'session.log')
                           end
       @created_at = determine_created_at
+      @job_id = metadata[:supplementary][:job_id] if defined?(metadata[:supplementary][:job_id])
     end
 
     def session_dir_path

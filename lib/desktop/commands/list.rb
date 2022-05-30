@@ -68,7 +68,9 @@ module Desktop
                   File.join(s.dir, 'session.png'),
                   s.ips.join("|"),
                   s.name,
-                ]
+                ].tap do |md|
+                  md.append(s.job_id) if s.job_id
+                end
               end
             puts a.join("\t")
           end

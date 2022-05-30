@@ -89,9 +89,13 @@ EOF
       #{Paint['Port:','#2794d8']} #{Paint[session.port, :green]}
    #{Paint['Display:','#2794d8']} #{Paint[":#{session.display}",:green]}
   #{Paint['Password:','#2794d8']} #{Paint[session.password, :green]}
-
-#{__send__(suffix, session)}
 EOF
+          if session.job_id
+            puts <<EOF
+    #{Paint['Job ID:','#2794d8']} #{Paint[session.job_id, :green]}
+EOF
+          end
+          puts "\n#{__send__(suffix, session)}"
         else
           puts "Identity\t#{session.uuid}"
           puts "Type\t#{session.type.name}"
@@ -107,6 +111,7 @@ EOF
           puts "Screenshot Path\t#{File.join(session.dir, 'session.png')}"
           puts "IPs\t#{session.ips.join("|")}"
           puts "Name\t#{session.name}"
+          puts "Job ID\t#{session.job_id}" if session.job_id
         end
       end
 
