@@ -78,7 +78,7 @@ module Desktop
       end
     end
 
-    attr_reader :uuid, :type, :metadata, :host_name, :state, :websocket_port, :created_at, :last_accessed_at, :job_id
+    attr_reader :uuid, :type, :metadata, :host_name, :state, :websocket_port, :websocket_pid, :created_at, :last_accessed_at, :job_id
     attr_accessor :name
 
     def initialize(uuid: nil, type: nil, name: nil)
@@ -101,10 +101,6 @@ module Desktop
           @created_at = determine_created_at
         end
       end
-    end
-
-    def state
-      @state
     end
 
     def ip
@@ -400,7 +396,7 @@ module Desktop
     end
 
     def active?
-      if @state != :broken && local? && File.exists?(pidfile)
+      if @state != :broken && local? && File.exist?(pidfile)
         pid = File.read(pidfile)
         !!Sys::ProcTable.ps(pid: pid.to_i)
       end
@@ -411,6 +407,7 @@ module Desktop
     end
 
     def save
+      self.dir
       {
         metadata: @metadata,
         type: @type.name,
@@ -424,7 +421,7 @@ module Desktop
       }.tap do |md|
         if websocket_port != 0
           md[:websocket_port] = websocket_port
-          md[:websocket_pid] = @websocket_pid
+          md[:websocket_pid] = websocket_pid
         end
         md[:supplementary].tap do |smd|
           smd[:job_id] = job_id if job_id
@@ -433,6 +430,25 @@ module Desktop
           io.write(md.to_yaml)
         end
       end
+    end
+
+    def load
+      metadata = YAML.load_file(metadata_file)
+      @metadata = metadata[:metadata]
+      @name = metadata[:name]
+      @type = Type[metadata[:type]]
+      @password = metadata[:password]
+      @ip = metadata[:ip]
+      @ips = metadata[:ips] || []
+      @websocket_port = metadata[:websocket_port] || 0
+      @websocket_pid = metadata[:websocket_pid]
+      @host_name = metadata[:host_name]
+      @state = active? ? :active : :exited
+      @last_accessed_at = if File.exist?File.join(dir, 'session.log')
+                            File.ctime File.join(dir, 'session.log')
+                          end
+      @created_at = determine_created_at
+      @job_id = metadata[:supplementary][:job_id] if defined?(metadata[:supplementary][:job_id])
     end
 
     private
@@ -449,25 +465,6 @@ module Desktop
         end
       end
       free_port
-    end
-
-    def load
-      metadata = YAML.load_file(metadata_file)
-      @metadata = metadata[:metadata]
-      @name = metadata[:name]
-      @type = Type[metadata[:type]]
-      @password = metadata[:password]
-      @ip = metadata[:ip]
-      @ips = metadata[:ips] || []
-      @websocket_port = metadata[:websocket_port] || 0
-      @websocket_pid = metadata[:websocket_pid]
-      @host_name = metadata[:host_name]
-      @state = active? ? :active : :exited
-      @last_accessed_at = if File.exists?File.join(dir, 'session.log')
-                            File.ctime File.join(dir, 'session.log')
-                          end
-      @created_at = determine_created_at
-      @job_id = metadata[:supplementary][:job_id] if defined?(metadata[:supplementary][:job_id])
     end
 
     def session_dir_path
