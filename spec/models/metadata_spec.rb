@@ -42,7 +42,6 @@ RSpec.describe "Desktop::Session", type: :model do
         @session = Desktop::Session.new( type: @type, name: name )
         session.save
         Desktop::Session.new( uuid: uuid ).tap do |s|
-          s.load
           expect(s.name).to eq(name)
           expect(s.type.name).to eq(@type.name)
           expect(s.password).to eq(session.password)
@@ -56,12 +55,15 @@ RSpec.describe "Desktop::Session", type: :model do
 
     it "saves the job ID for sessions started through flight job" do
       flight_job_id = ENV["FLIGHT_JOB_ID"]
-      ENV["FLIGHT_JOB_ID"] = job_id
-      FakeFS do
-        session.save
-        expect(metadata[:supplementary]).to eq({ job_id: job_id })
+      begin
+        ENV["FLIGHT_JOB_ID"] = job_id
+        FakeFS do
+          session.save
+          expect(metadata[:supplementary]).to eq({ job_id: job_id })
+        end
+      ensure
+        ENV["FLIGHT_JOB_ID"] = flight_job_id
       end
-      ENV["FLIGHT_JOB_ID"] = flight_job_id
     end
 
     it "saves an empty 'supplementary' field for sessions not started through flight job" do
@@ -74,21 +76,26 @@ RSpec.describe "Desktop::Session", type: :model do
 
   context "loading optional metadata attributes" do
     it "loads the job ID if it is present in the metadata" do
-      Desktop::Session.new( uuid: 'flight-job-session' ).tap do |s|
-        s.load
-        expect(s.job_id).to eq(job_id)
-      end
+      check_job_id(session_id: 'flight-job-session', job_id: job_id)
     end
 
     it "doesn't raise an error if the job ID is absent from the metadata" do
-      Desktop::Session.new( uuid: 'valid-session' ).tap do |s|
-        s.load
-        expect(s.job_id).to eq(nil)
-      end
+      check_job_id(session_id: 'no-job-id')
+    end
+
+    it "doesn't raise an error if the supplementary field is absent from the metadata" do
+      check_job_id(session_id: 'no-supplementary-metadata')
     end
   end
 
   def session
     @session
+  end
+
+  def check_job_id(session_id:, job_id: nil)
+    Desktop::Session.new( uuid: session_id ).tap do |s|
+      expect(s.metadata).not_to eq(Hash.new)
+      expect(s.job_id).to eq(job_id)
+    end
   end
 end

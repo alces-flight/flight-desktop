@@ -124,7 +124,7 @@ module Desktop
     end
 
     def dir
-      @dir ||= find_session_dir
+      @dir ||= ensure_session_dir
     end
 
     def display
@@ -396,7 +396,7 @@ module Desktop
     end
 
     def active?
-      if @state != :broken && local? && File.exist?(pidfile)
+      if state != :broken && local? && File.exist?(pidfile)
         pid = File.read(pidfile)
         !!Sys::ProcTable.ps(pid: pid.to_i)
       end
@@ -407,7 +407,7 @@ module Desktop
     end
 
     def save
-      self.dir
+      ensure_session_dir
       {
         metadata: @metadata,
         type: @type.name,
@@ -486,7 +486,7 @@ module Desktop
       end
     end
 
-    def find_session_dir
+    def ensure_session_dir
       session_dir_path.tap do |p|
         if ! File.directory?(p)
           FileUtils.mkdir_p(p)
