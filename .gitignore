@@ -8,3 +8,4 @@ etc/config.yml
 libexec/desktop/hooks/*
 *.swp
 *.swo
+*.idea*

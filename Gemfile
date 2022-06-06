@@ -10,3 +10,9 @@ gem 'flight_configuration', github: 'openflighthpc/flight_configuration', tag: '
 gem 'ronn'
 gem 'whirly'
 gem 'sys-proctable'
+
+group :test do
+  gem 'rspec'
+  gem 'fakefs'
+end
+

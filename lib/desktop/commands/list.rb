@@ -68,6 +68,7 @@ module Desktop
                   File.join(s.dir, 'session.png'),
                   s.ips.join("|"),
                   s.name,
+                  s.job_id,
                 ]
               end
             puts a.join("\t")
