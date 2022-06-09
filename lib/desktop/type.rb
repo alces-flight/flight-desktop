@@ -64,6 +64,7 @@ module Desktop
         @types ||=
           begin
             {}.tap do |h|
+              puts Config.type_paths.inspect
               Config.type_paths.each do |p|
                 Dir[File.join(p,'*'),File.join(p,'.[a-z]*')].sort.each do |d|
                   begin

@@ -249,6 +249,18 @@ settings are:
 EOF
     end
 
+    command :resize do |c|
+      cli_syntax(c, 'ID WIDTHxHEIGHT')
+      c.summary = 'Resize an existing desktop session'
+      c.action Commands, :resize
+      c.description = <<EOF
+Resize an existing desktop session.
+
+Specify the desktop ID of the session to be resized and the desired size 
+of the session in the format WIDTHxHEIGHT.
+EOF
+      end
+
     if Process.euid == 0
       command :prepare do |c|
         cli_syntax(c, 'TYPE')
