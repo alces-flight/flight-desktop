@@ -64,7 +64,6 @@ module Desktop
         @types ||=
           begin
             {}.tap do |h|
-              puts Config.type_paths.inspect
               Config.type_paths.each do |p|
                 Dir[File.join(p,'*'),File.join(p,'.[a-z]*')].sort.each do |d|
                   begin
@@ -121,10 +120,15 @@ module Desktop
       @arch = md[:arch] || []
       @hidden = (File.basename(dir)[0] == '.' || md[:hidden] || false)
       @scriptable = md[:scriptable]
+      @resizable = md[:resizable]
     end
 
     def scriptable?
       @scriptable
+    end
+
+    def resizable?
+      @resizable
     end
 
     def launch_app_path

@@ -143,6 +143,36 @@ module Desktop
       FileUtils.rm_rf(session_dir_path)
     end
 
+    def resize(geometry)
+      raise "cannot resize a remote desktop session" unless local?
+      raise "cannot resize the #{type.name} desktop type" unless type.resizable?
+      raise "invalid geometry for the #{type.name} desktop type" unless valid_geometry?(geometry)
+      IO.popen(
+        {
+          "flight_DESKTOP_geometry" => geometry,
+          "DISPLAY" => ":#{display}",
+        },
+        ["#{Dir.home}/.local/share/flight/desktop/bin/flight-desktop_geometry.sh"],
+        )
+    end
+
+    def valid_geometry?(geometry)
+      raise 'invalid geometry string' unless geometry =~ /^[0-9]+x[0-9]+$/
+
+      # test whether geometry is on list of valid geometries for the desktop type
+      CommandUtils.with_clean_env do
+        IO.popen(
+          {"DISPLAY" => ":#{display}"},
+          ["xrandr"],
+          ) do |io|
+          io.readlines
+            .drop(2)
+            .each { |g| return true if geometry == g.split(' ')[0] }
+        end
+        false
+      end
+    end
+
     def kill
       CommandUtils.with_clean_env do
         IO.popen(
@@ -195,7 +225,7 @@ module Desktop
             kill_on_script_exit: kill_on_script_exit,
             override_env: override_env,
             post_init_script: script,
-          ).tap do |started|
+            ).tap do |started|
             if started
               start_websocket_server
               start_grabber
@@ -271,8 +301,8 @@ module Desktop
 
     def start_grabber
       if File.executable?('/usr/bin/xwd') &&
-         File.executable?('/usr/bin/xwdtopnm') &&
-         File.executable?('/usr/bin/pnmtopng')
+        File.executable?('/usr/bin/xwdtopnm') &&
+        File.executable?('/usr/bin/pnmtopng')
         pid = fork {
           log_file = File.join(
             dir,
@@ -381,10 +411,10 @@ module Desktop
         pid = fork {
           exec(
             ENV.to_h.dup.merge({
-              "DISPLAY" => ":#{display}",
-              "flight_DESKTOP_SCRIPT_index" => index.to_s,
-              "flight_DESKTOP_SCRIPT_id" => uuid.split(".").first
-            }),
+                                 "DISPLAY" => ":#{display}",
+                                 "flight_DESKTOP_SCRIPT_index" => index.to_s,
+                                 "flight_DESKTOP_SCRIPT_id" => uuid.split(".").first
+                               }),
             'bash',
             type.launch_app_path,
             *args,

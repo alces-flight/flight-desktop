@@ -25,12 +25,16 @@
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
 require_relative '../command'
+require_relative '../session'
+require_relative '../session_finder'
 
 module Desktop
   module Commands
     class Resize < Command
+      include Concerns::SessionFinder
       def run
-
+        geometry = args[1]
+        session.resize(geometry)
       end
     end
   end
