@@ -256,8 +256,8 @@ EOF
       c.description = <<EOF
 Resize an existing desktop session.
 
-Specify the desktop ID of the session to be resized and the desired size 
-of the session in the format WIDTHxHEIGHT.
+Specify the desktop ID of the session and the desired size in the format 
+WIDTHxHEIGHT.
 EOF
       end
 

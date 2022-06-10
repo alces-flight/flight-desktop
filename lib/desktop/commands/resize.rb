@@ -33,8 +33,7 @@ module Desktop
     class Resize < Command
       include Concerns::SessionFinder
       def run
-        geometry = args[1]
-        session.resize(geometry)
+        session.resize(args[1])
       end
     end
   end

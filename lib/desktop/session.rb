@@ -411,10 +411,10 @@ module Desktop
         pid = fork {
           exec(
             ENV.to_h.dup.merge({
-                                 "DISPLAY" => ":#{display}",
-                                 "flight_DESKTOP_SCRIPT_index" => index.to_s,
-                                 "flight_DESKTOP_SCRIPT_id" => uuid.split(".").first
-                               }),
+              "DISPLAY" => ":#{display}",
+              "flight_DESKTOP_SCRIPT_index" => index.to_s,
+              "flight_DESKTOP_SCRIPT_id" => uuid.split(".").first
+            }),
             'bash',
             type.launch_app_path,
             *args,
