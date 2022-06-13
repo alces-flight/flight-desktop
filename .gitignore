@@ -10,5 +10,4 @@ libexec/desktop/hooks/*
 *.swo
 *.idea*
 spec/examples.txt
-Gemfile.lock
 
