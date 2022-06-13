@@ -9,3 +9,5 @@ libexec/desktop/hooks/*
 *.swp
 *.swo
 *.idea*
+spec/examples.txt
+

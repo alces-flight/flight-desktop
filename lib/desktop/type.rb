@@ -120,10 +120,15 @@ module Desktop
       @arch = md[:arch] || []
       @hidden = (File.basename(dir)[0] == '.' || md[:hidden] || false)
       @scriptable = md[:scriptable]
+      @resizable = md[:resizable]
     end
 
     def scriptable?
       @scriptable
+    end
+
+    def resizable?
+      @resizable
     end
 
     def launch_app_path
