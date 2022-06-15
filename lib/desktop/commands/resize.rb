@@ -34,8 +34,10 @@ module Desktop
       include Concerns::SessionFinder
       def run
         if @options.avail
-          puts session.available_geometries.sort_by { |g| g.split('x')[1].to_i }
-                                           .sort_by { |g| g.split('x')[0].to_i }
+          raise "cannot retrieve geometries for a remote desktop" unless session.local?
+          puts session.available_geometries
+                      .sort_by { |g| g.split('x')[1].to_i }
+                      .sort_by { |g| g.split('x')[0].to_i }
         else
           session.resize(args[1])
         end

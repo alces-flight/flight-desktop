@@ -91,6 +91,7 @@ module Desktop
         @created_at = Time.now
         @name = name
         @job_id = ENV['FLIGHT_JOB_ID']
+        @geometry = Config.geometry
       else
         @uuid = uuid
         begin
@@ -143,6 +144,10 @@ module Desktop
       FileUtils.rm_rf(session_dir_path)
     end
 
+    def geometry
+      local? ? @geometry : 'UNKNOWN'
+    end
+
     def resize(geometry)
       raise "cannot resize a remote desktop session" unless local?
       raise "cannot resize the #{type.name} desktop type" unless type.resizable?
@@ -154,12 +159,14 @@ module Desktop
         },
         ["#{Dir.home}/.local/share/flight/desktop/bin/flight-desktop_geometry.sh"],
         )
+      @geometry = geometry
+      save
     end
 
     def valid_geometry?(geometry)
       raise 'invalid geometry string' unless geometry =~ /^[0-9]+x[0-9]+$/
 
-      # test whether geometry is on list of valid geometries for the desktop type
+      # test whether geometry is on list of available geometries for the desktop type
       available_geometries.each { |g| return true if geometry == g }
       false
     end
@@ -452,6 +459,7 @@ module Desktop
         host_name: host_name,
         created_at: created_at.strftime("%Y-%m-%dT%T%z"),
         name: name,
+        geometry: geometry,
         supplementary: {},
       }.tap do |md|
         if websocket_port != 0
@@ -483,6 +491,7 @@ module Desktop
                             File.ctime File.join(dir, 'session.log')
                           end
       @created_at = determine_created_at
+      @geometry = metadata[:geometry]
       @job_id = metadata[:supplementary][:job_id] if defined?(metadata[:supplementary][:job_id])
     end
 
