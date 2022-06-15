@@ -160,17 +160,22 @@ module Desktop
       raise 'invalid geometry string' unless geometry =~ /^[0-9]+x[0-9]+$/
 
       # test whether geometry is on list of valid geometries for the desktop type
-      CommandUtils.with_clean_env do
-        IO.popen(
-          {"DISPLAY" => ":#{display}"},
-          ["xrandr"],
-          ) do |io|
-          io.readlines
-            .drop(2)
-            .each { |g| return true if geometry == g.split(' ')[0] }
+      available_geometries.each { |g| return true if geometry == g }
+      false
+    end
+
+    def available_geometries
+      @available_geometries ||=
+        CommandUtils.with_clean_env do
+          IO.popen(
+            {"DISPLAY" => ":#{display}"},
+            ["xrandr"],
+            ) do |io|
+            io.readlines
+              .drop(2)
+              .map { |g| g.split(' ')[0] }
+          end
         end
-        false
-      end
     end
 
     def kill

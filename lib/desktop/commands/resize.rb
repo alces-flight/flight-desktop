@@ -33,7 +33,12 @@ module Desktop
     class Resize < Command
       include Concerns::SessionFinder
       def run
-        session.resize(args[1])
+        if @options.avail
+          puts session.available_geometries.sort_by { |g| g.split('x')[1].to_i }
+                                           .sort_by { |g| g.split('x')[0].to_i }
+        else
+          session.resize(args[1])
+        end
       end
     end
   end
