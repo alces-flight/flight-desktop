@@ -24,21 +24,27 @@
 # For more information on Flight Desktop, please visit:
 # https://github.com/alces-flight/flight-desktop
 # ==============================================================================
+require 'commander'
 require_relative '../command'
 require_relative '../session'
 require_relative '../session_finder'
 
 module Desktop
   module Commands
+    extend Commander
+
     class Resize < Command
       include Concerns::SessionFinder
       def run
+        args_needed = @options.avail ? 1 : 2
         if @options.avail
+          raise Commander::Command::CommandUsageError, "excess arguments for command 'resize'" if args.length > args_needed
           raise "cannot retrieve geometries for a remote desktop" unless session.local?
           puts session.available_geometries
-                      .sort_by { |g| g.split('x')[1].to_i }
-                      .sort_by { |g| g.split('x')[0].to_i }
+                      .sort_by { |g| g.split('x').map(&:to_i) }
+                      .reverse
         else
+          raise Commander::Command::CommandUsageError, "insufficient arguments for command 'resize'" if args.length < args_needed
           session.resize(args[1])
         end
       end
