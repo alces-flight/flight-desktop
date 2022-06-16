@@ -11,102 +11,90 @@ protocol.
 
 ## Installation
 
-### From source
+### Installing with the OpenFlight package repos
 
-Flight Desktop requires a recent version of Ruby and `bundler`.
+Flight Desktop is available as part of the *Flight User Suite*.  This is the
+easiest method for installing Flight Desktop and all its dependencies.  It is
+documented in [the OpenFlight
+Documentation](https://use.openflighthpc.org/installing-user-suite/install.html#installing-flight-user-suite).
 
-The following will install from source using `git`:
+### Manual Installation
+
+#### Prerequisites
+
+Flight Desktop is developed and tested with Ruby version `2.7.1` and `bundler`
+`2.1.4`.  Other versions may work but currently are not officially supported.
+
+Also, a VNC password program is required at `/usr/bin/vncpasswd`. For example,
+this can be provided by `tigervnc-server`.  See the configuration section
+below for details on how to use a different path.
+
+#### Steps
+
+The following will install from source using `git`.  The `master` branch is
+the current development version and may not be appropriate for a production
+installation. Instead a tagged version should be checked out.
 
 ```
 git clone https://github.com/alces-flight/flight-desktop.git
 cd flight-desktop
-bundle install --path=vendor
+git checkout <tag>
+bundle config set --local with default
+bundle config set --local without test
+bundle install
 ```
 
 Use the script located at `bin/desktop` to execute the tool.
 
-### Installing with Flight Runway
-
-Flight Runway provides a Ruby environment and command-line helpers for
-running openflightHPC tools.  Flight Desktop integrates with Flight
-Runway to provide an easy way for multiple users of an
-HPC environment to use the tool.
-
-To install Flight Runway, see the [Flight Runway installation
-docs](https://github.com/openflighthpc/flight-runway#installation).
-
-These instructions assume that `flight-runway` has been installed from
-the openflightHPC yum repository and that either [system-wide
-integration](https://github.com/openflighthpc/flight-runway#system-wide-integration) has been enabled or the
-[`flight-starter`](https://github.com/openflighthpc/flight-starter) tool has been
-installed and the environment activated with the `flight start` command.
-
- * Enable the Alces Flight RPM repository:
-
-    ```
-    yum install https://repo.openflighthpc.org/openflight/centos/7/x86_64/openflighthpc-release-2-1.noarch.rpm
-    ```
-
- * Rebuild your `yum` cache:
-
-    ```
-    yum makecache
-    ```
-    
- * Install the `flight-desktop` RPM:
-
-    ```
-    [root@myhost ~]# yum install flight-desktop
-    ```
-
-Flight Desktop is now available via the `flight` tool:
-
-```
-[root@myhost ~]# flight desktop
-  NAME:
-
-    flight desktop
-
-  DESCRIPTION:
-
-    Manage interactive GUI desktop sessions.
-
-  COMMANDS:
-
-    avail  Show available desktop types
-    clean  Clean up one or more exited desktop sessions
-    help   Display global or [command] help documentation
-    <snip>
-```
-
 ## Configuration
 
-Making changes to the default configuration is optional and can be achieved by creating a `config.yml` file in the `etc/` subdirectory of the tool.  A `config.yml.ex` file is distributed which outlines all the configuration values available:
+Making changes to the default configuration is optional and can be achieved by
+creating a `config.yml` file in the `etc/` subdirectory of the tool.  A
+`config.yml.ex` file is distributed which outlines all the configuration
+values available:
 
- * `desktop_type` - Global setting for default desktop type (defaults to `gnome`).
+ * `desktop_type` - Global setting for default desktop type (defaults to
+   `gnome`).
  * `geometry` - Global setting for default geometry (defaults to `1024x768`).
  * `bg_image` - background image to use for (some) desktop types.
- * `access_hosts` - array of host addresses/network ranges for machines considered to be "access hosts", i.e. hosts that can be logged into from outside the cluster (for e.g. login nodes).
- * `access_host` - hostname to use to SSH into the cluster when accessing externally.
- * `access_ip` - IP address of the machine on which Flight Desktop is installed that can be used to access it from external locations (only applies to designated "access hosts" and will default to the IP address of interface with the public route).
- * `vnc_passwd_program` - program to use to generate VNC passwords (defaults to `/usr/bin/vncpasswd`).
- * `vnc_server_program` - program to use to start VNC sessions (must be Flight Desktop compatible, defaults to `libexec/vncserver` within Flight Desktop tree).
+ * `access_hosts` - array of host addresses/network ranges for machines
+   considered to be "access hosts", i.e. hosts that can be logged into from
+   outside the cluster (for e.g. login nodes).
+ * `access_host` - hostname to use to SSH into the cluster when accessing
+   externally.
+ * `access_ip` - IP address of the machine on which Flight Desktop is
+   installed that can be used to access it from external locations (only
+   applies to designated "access hosts" and will default to the IP address of
+   interface with the public route).
+ * `vnc_passwd_program` - program to use to generate VNC passwords (defaults
+   to `/usr/bin/vncpasswd`).
+ * `vnc_server_program` - program to use to start VNC sessions (must be Flight
+   Desktop compatible, defaults to `libexec/vncserver` within Flight Desktop
+   tree).
 
 ## Operation
 
+A brief usage guide is given below.  See the `help` command for further
+details and information about other commands.
+
 Display the range of available desktop types using the `avail` command.
 
-Verify that desktop type prerequisites are met using the `verify` command. If  they are not, use the `prepare` command to fulfil the prequisites and mark
-the desktop type as verified -- note that superuser (root) access is
-required to execute the `prepare` command as it will need to install
-distribution packages.
+Verify that desktop type prerequisites are met using the `verify` command. If
+they are not, use the `prepare` command to fulfil the prequisites and mark the
+desktop type as verified -- note that superuser (root) access is required to
+execute the `prepare` command as it will need to install distribution
+packages.
 
 Once verified, a user can start a desktop session with the `start` command.
 
 Access desktop sessions using a VNC client as instructed by the output
 from the `start` and `show` commands.
 
-See the `help` command for further details and information about other commands.
+If Flight Desktop was installed via the OpenFlight package repos, you can read
+more detailed usage instructions by running `flight howto show flight
+desktop`.  Further information and examples of the `desktop` command are
+available in [the OpenFlight
+documentation](https://use.openflighthpc.org/en/latest/working-with-user-suite/flight-desktop.html).
 
 # Contributing
 
