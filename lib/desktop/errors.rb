@@ -35,4 +35,5 @@ module Desktop
   InvalidSettingError = Class.new(RuntimeError)
   InternalError = Class.new(RuntimeError)
   InputError = Class.new(RuntimeError)
+  TimeoutError = Class.new(RuntimeError)
 end

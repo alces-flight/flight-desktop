@@ -39,7 +39,6 @@ module Desktop
           if args.length > args_needed
             raise Commander::Command::CommandUsageError, "excess arguments for command 'resize'"
           end
-          raise "cannot retrieve geometries for a remote desktop" unless session.local?
           puts session.available_geometries
                       .sort_by { |g| g.split('x').map(&:to_i) }
                       .reverse

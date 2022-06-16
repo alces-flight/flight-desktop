@@ -28,6 +28,7 @@ require_relative 'config'
 require_relative 'network_utils'
 require_relative 'command_utils'
 require 'time'
+require 'timeout'
 require 'securerandom'
 require 'fileutils'
 require 'sys/proctable'
@@ -131,6 +132,10 @@ module Desktop
       @metadata[:display]
     end
 
+    def display_full
+      (local? ? '' : ip) + ":#{display}"
+    end
+
     def port
       (@metadata[:display] || 0).to_i + 5900
     end
@@ -144,23 +149,32 @@ module Desktop
     end
 
     def geometry
-      return 'UNKNOWN' unless local?
-      xrandr.readlines[0]
-            .slice(/current (.*),/, 1)
-            .gsub(/\s/, '')
+      begin
+        xrandr.first
+              .slice(/current (.*),/, 1)
+              .gsub(/\s/, '')
+      rescue
+        'UNKNOWN'
+      end
     end
 
     def resize(geometry)
-      raise "cannot resize a remote desktop session" unless local?
       raise "cannot resize the #{type.name} desktop type" unless type.resizable?
       raise "invalid geometry for the #{type.name} desktop type" unless valid_geometry?(geometry)
-      IO.popen(
-        {
-          "flight_DESKTOP_geometry" => geometry,
-          "DISPLAY" => ":#{display}",
-        },
-        ["#{Dir.home}/.local/share/flight/desktop/bin/flight-desktop_geometry.sh"],
-        )
+      check_for_timeout do
+        begin
+          pio = IO.popen(
+            {
+              "flight_DESKTOP_geometry" => geometry,
+              "DISPLAY" => display_full,
+            },
+            ["#{Dir.home}/.local/share/flight/desktop/bin/flight-desktop_geometry.sh"],
+            )
+        ensure
+          Process.kill 9, pio.pid
+          pio.close
+        end
+      end
     end
 
     def valid_geometry?(geometry)
@@ -172,17 +186,30 @@ module Desktop
 
     def available_geometries
       @available_geometries ||=
-        xrandr.readlines
-              .drop(2)
+        xrandr.drop(2)
               .map { |g| g.split(' ')[0] }
     end
 
     def xrandr
-      CommandUtils.with_clean_env do
-        IO.popen(
-          {"DISPLAY" => ":#{display}"},
-          ["xrandr"],
-          )
+      check_for_timeout do
+        CommandUtils.with_clean_env do
+          pio = IO.popen(
+            {"DISPLAY" => display_full},
+            ["xrandr"],
+            )
+          pio.readlines
+        ensure
+          Process.kill 9, pio.pid
+          pio.close
+        end
+      end
+    end
+
+    def check_for_timeout
+      begin
+        Timeout.timeout(Flight.config.timeout) { yield }
+      rescue
+        raise TimeoutError, 'connection to desktop timed out'
       end
     end
 
@@ -424,10 +451,10 @@ module Desktop
         pid = fork {
           exec(
             ENV.to_h.dup.merge({
-              "DISPLAY" => ":#{display}",
-              "flight_DESKTOP_SCRIPT_index" => index.to_s,
-              "flight_DESKTOP_SCRIPT_id" => uuid.split(".").first
-            }),
+                                 "DISPLAY" => ":#{display}",
+                                 "flight_DESKTOP_SCRIPT_index" => index.to_s,
+                                 "flight_DESKTOP_SCRIPT_id" => uuid.split(".").first
+                               }),
             'bash',
             type.launch_app_path,
             *args,
