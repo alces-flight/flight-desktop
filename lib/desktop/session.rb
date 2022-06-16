@@ -143,6 +143,13 @@ module Desktop
       FileUtils.rm_rf(session_dir_path)
     end
 
+    def geometry
+      return 'UNKNOWN' unless local?
+      xrandr.readlines[0]
+            .slice(/current (.*),/, 1)
+            .gsub(/\s/, '')
+    end
+
     def resize(geometry)
       raise "cannot resize a remote desktop session" unless local?
       raise "cannot resize the #{type.name} desktop type" unless type.resizable?
@@ -159,17 +166,23 @@ module Desktop
     def valid_geometry?(geometry)
       raise 'invalid geometry string' unless geometry =~ /^[0-9]+x[0-9]+$/
 
-      # test whether geometry is on list of valid geometries for the desktop type
+      # test whether geometry is on list of available geometries for the desktop type
+      available_geometries.any? { |g| geometry == g }
+    end
+
+    def available_geometries
+      @available_geometries ||=
+        xrandr.readlines
+              .drop(2)
+              .map { |g| g.split(' ')[0] }
+    end
+
+    def xrandr
       CommandUtils.with_clean_env do
         IO.popen(
           {"DISPLAY" => ":#{display}"},
           ["xrandr"],
-          ) do |io|
-          io.readlines
-            .drop(2)
-            .each { |g| return true if geometry == g.split(' ')[0] }
-        end
-        false
+          )
       end
     end
 

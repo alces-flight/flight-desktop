@@ -89,6 +89,7 @@ EOF
       #{Paint['Port:','#2794d8']} #{Paint[session.port, :green]}
    #{Paint['Display:','#2794d8']} #{Paint[":#{session.display}",:green]}
   #{Paint['Password:','#2794d8']} #{Paint[session.password, :green]}
+  #{Paint['Geometry:','#2794d8']} #{Paint[session.geometry, :green]}
 EOF
           if session.job_id
             puts <<EOF
@@ -111,6 +112,7 @@ EOF
           puts "Screenshot Path\t#{File.join(session.dir, 'session.png')}"
           puts "IPs\t#{session.ips.join("|")}"
           puts "Name\t#{session.name}"
+          puts "Geometry\t#{session.geometry}"
           puts "Job ID\t#{session.job_id}" if session.job_id
         end
       end

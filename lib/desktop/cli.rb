@@ -250,14 +250,19 @@ EOF
     end
 
     command :resize do |c|
-      cli_syntax(c, 'DESKTOP WIDTHxHEIGHT')
+      cli_syntax(c, 'DESKTOP [WIDTHxHEIGHT]')
       c.summary = 'Resize an existing desktop session'
       c.action Commands, :resize
+      c.slop.bool '--avail', 'List the available sizes for DESKTOP.'
       c.description = <<EOF
-Resize an existing desktop session.
+Resize an existing desktop session or list the available sizes for an
+existing session.
 
-Specify the desktop session and the desired size in the format 
-WIDTHxHEIGHT.
+To resize, specify the desktop session and the desired size in the 
+format WIDTHxHEIGHT.
+
+List the available sizes for a given desktop session using the 
+'--avail' option.
 
 The DESKTOP parameter should either specify the session identity or
 a display number prefixed with ':', e.g. ':1'.
