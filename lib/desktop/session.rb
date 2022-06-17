@@ -161,7 +161,7 @@ module Desktop
     def resize(geometry)
       raise "cannot resize the #{type.name} desktop type" unless type.resizable?
       raise "invalid geometry for the #{type.name} desktop type" unless valid_geometry?(geometry)
-      check_for_timeout do
+      with_timeout do
         CommandUtils.with_clean_env do
           pio = IO.popen(
             {
@@ -170,8 +170,10 @@ module Desktop
             },
             ["#{Dir.home}/.local/share/flight/desktop/bin/flight-desktop_geometry.sh"],
             )
-          sleep(0.1) # needed so the process doesn't get killed before it finishes
+          pio.gets(nil) # needed so the process doesn't get killed before it finishes
         ensure
+          Process.kill 15, pio.pid
+          sleep 0.1
           Process.kill 9, pio.pid
           pio.close
         end
@@ -192,7 +194,7 @@ module Desktop
     end
 
     def xrandr
-      check_for_timeout do
+      with_timeout do
         CommandUtils.with_clean_env do
           pio = IO.popen(
             {"DISPLAY" => display_full},
@@ -200,16 +202,18 @@ module Desktop
             )
           pio.readlines
         ensure
+          Process.kill 15, pio.pid
+          sleep 0.1
           Process.kill 9, pio.pid
           pio.close
         end
       end
     end
 
-    def check_for_timeout
+    def with_timeout
       begin
         Timeout.timeout(Flight.config.timeout) { yield }
-      rescue
+      rescue Timeout::Error
         raise TimeoutError, 'connection to desktop timed out'
       end
     end
