@@ -38,6 +38,7 @@
 # will be used.
 #websockify_paths:
 #  - /usr/bin/websockify
-#timeout: 5
 # Time spent attempting to connect to a remote desktop before timing out
 # (in seconds)
+#timeout: 5
+
