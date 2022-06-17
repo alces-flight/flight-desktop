@@ -162,7 +162,7 @@ module Desktop
       raise "cannot resize the #{type.name} desktop type" unless type.resizable?
       raise "invalid geometry for the #{type.name} desktop type" unless valid_geometry?(geometry)
       check_for_timeout do
-        begin
+        CommandUtils.with_clean_env do
           pio = IO.popen(
             {
               "flight_DESKTOP_geometry" => geometry,
@@ -170,6 +170,7 @@ module Desktop
             },
             ["#{Dir.home}/.local/share/flight/desktop/bin/flight-desktop_geometry.sh"],
             )
+          sleep(0.1) # needed so the process doesn't get killed before it finishes
         ensure
           Process.kill 9, pio.pid
           pio.close
@@ -451,10 +452,10 @@ module Desktop
         pid = fork {
           exec(
             ENV.to_h.dup.merge({
-                                 "DISPLAY" => ":#{display}",
-                                 "flight_DESKTOP_SCRIPT_index" => index.to_s,
-                                 "flight_DESKTOP_SCRIPT_id" => uuid.split(".").first
-                               }),
+              "DISPLAY" => ":#{display}",
+              "flight_DESKTOP_SCRIPT_index" => index.to_s,
+              "flight_DESKTOP_SCRIPT_id" => uuid.split(".").first
+            }),
             'bash',
             type.launch_app_path,
             *args,
