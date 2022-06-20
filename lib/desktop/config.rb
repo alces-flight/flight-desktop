@@ -114,7 +114,7 @@ module Desktop
     attribute :hooks_dir, default: 'libexec/desktop/hooks',
               transform: relative_to(Flight.root)
 
-    attribute :timeout, default: 5
+    attribute :timeout, default: 2
 
     attribute :global_log_path, default: 'log/desktop', transform: relative_to(root_path)
     attribute :user_log_path, default: 'log/desktop', transform: relative_to(xdg_cache.home)

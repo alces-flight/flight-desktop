@@ -40,5 +40,5 @@
 #  - /usr/bin/websockify
 # Time spent attempting to connect to a remote desktop before timing out
 # (in seconds)
-#timeout: 5
+#timeout: 2
 
