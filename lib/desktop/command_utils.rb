@@ -113,7 +113,8 @@ EOF
           puts "IPs\t#{session.ips.join("|")}"
           puts "Name\t#{session.name}"
           puts "Geometry\t#{session.geometry}"
-          puts "Job ID\t#{session.job_id}" if session.job_id
+          puts "Job ID\t#{session.job_id}"
+          puts "Available Geometries\t#{session.available_geometries.join("|")}"
         end
       end
 
