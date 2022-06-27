@@ -191,7 +191,7 @@ module Desktop
       @available_geometries ||=
         xrandr.drop(2)
               .map { |g| g.split(' ')[0] }
-              .sort_by { |g| g.split('x')[0].to_i }
+              .sort_by { |g| g.split('x').map(&:to_i) }
               .reverse
     end
 
