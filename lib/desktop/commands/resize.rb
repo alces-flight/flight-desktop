@@ -40,8 +40,6 @@ module Desktop
             raise Commander::Command::CommandUsageError, "excess arguments for command 'resize'"
           end
           puts session.available_geometries
-                      .sort_by { |g| g.split('x').map(&:to_i) }
-                      .reverse
         else
           if args.length < args_needed
             raise Commander::Command::CommandUsageError, "insufficient arguments for command 'resize'"
