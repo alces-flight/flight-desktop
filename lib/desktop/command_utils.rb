@@ -115,6 +115,7 @@ EOF
           puts "Geometry\t#{session.geometry}"
           puts "Job ID\t#{session.job_id}"
           puts "Available Geometries\t#{session.available_geometries.join("|")}"
+          puts "Capabilities\t#{capabilities(session).join("|")}"
         end
       end
 
@@ -268,6 +269,14 @@ EOF
             ENV.clear.replace(original_env)
           end
         end
+      end
+
+      def capabilities(session)
+        {
+          "resizable" => session.type.resizable?,
+        }
+          .select { |k, v| !!v }
+          .keys
       end
     end
   end
