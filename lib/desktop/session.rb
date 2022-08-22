@@ -133,7 +133,8 @@ module Desktop
     end
 
     def display_full
-      (local? ? '' : ip) + ":#{display}"
+      display_ip = local? ? "" : NetworkUtils.get_display_ip(ips)
+      "#{display_ip}:#{display}"
     end
 
     def port
