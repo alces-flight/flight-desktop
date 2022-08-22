@@ -60,6 +60,19 @@ module Desktop
           IPAddr.new(h).include?(ip_addr)
         end
       end
+
+      # Return the IP address to use for the `DISPLAY` environment variable.
+      def get_display_ip(ips)
+        if Config.display_network.nil?
+          ips.detect { |ip| private_ip?(ip) } || primary_ip
+        else
+          display_network = IPAddr.new(Config.display_network)
+          ips.detect do |ip|
+            ip = IPAddr.new(ip) if ip.is_a?(String)
+            display_network.include?(ip)
+          end
+        end
+      end
     end
   end
 end

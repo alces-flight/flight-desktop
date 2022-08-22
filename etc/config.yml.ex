@@ -41,4 +41,7 @@
 # Time spent attempting to connect to a remote desktop before timing out
 # (in seconds)
 #timeout: 2
-
+# Display IP network.  When using xrandr to configure a remote session, the
+# sesison's IP address in this network will be used.  If left unset, the first
+# private IP address will be used, falling back to the primary IP address.
+#display_network: 10.0.6.0/24

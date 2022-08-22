@@ -101,6 +101,8 @@ module Desktop
     attribute :access_ip, required: false, defualt: ->() { NetworkUtils.primary_ip }
     attribute :access_host, required: false
 
+    attribute :display_network, required: false
+
     attribute :global_state_path, default: 'var/lib/desktop',
               transform: relative_to(root_path)
     attribute :user_state_path, default: desktop_path.join('state'),
