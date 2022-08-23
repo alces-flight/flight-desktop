@@ -40,7 +40,6 @@ module Desktop
             Table.emit do |t|
               headers 'Name', 'Summary', 'State'
               Type.each do |t|
-                next if t.hidden
                 row Paint[t.name, :cyan],
                     word_wrap.call(
                       "#{Paint[t.summary, :green]}".tap do |s|
@@ -54,7 +53,6 @@ module Desktop
           end
         else
           Type.each do |t|
-            next if t.hidden
             puts [t.name, t.summary.chomp.gsub("\n"," "), t.url, t.verified? ? 'Verified' : 'Unverified'].join("\t")
           end
         end

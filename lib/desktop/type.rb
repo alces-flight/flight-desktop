@@ -69,7 +69,7 @@ module Desktop
                   begin
                     md = YAML.load_file(File.join(d,'metadata.yml'))
                     t = Type.new(md, d)
-                    h[md[:name].to_sym] = t if t.supports_host_arch?
+                    h[md[:name].to_sym] = t if t.supports_host_arch? && !t.disabled?
                   rescue
                     nil
                   end
@@ -108,7 +108,7 @@ module Desktop
     # See Type.default for the actual default desktop for the current user.
     attr_reader :default
     attr_reader :arch
-    attr_reader :hidden
+    attr_reader :disabled
     attr_reader :dir
 
     def initialize(md, dir)
@@ -118,9 +118,13 @@ module Desktop
       @default = md[:default]
       @dir = dir
       @arch = md[:arch] || []
-      @hidden = (File.basename(dir)[0] == '.' || md[:hidden] || false)
+      @disabled = (File.basename(dir)[0] == '.' || md[:disabled] || false)
       @scriptable = md[:scriptable]
       @resizable = md[:resizable]
+    end
+
+    def disabled?
+      @disabled
     end
 
     def scriptable?
