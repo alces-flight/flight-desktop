@@ -49,6 +49,16 @@ $geometry = "1024x768";
 #$depth = 16;
 $xauthorityFile = "$ENV{XAUTHORITY}" || "$ENV{HOME}/.Xauthority";
 
+my $release = "/etc/redhat-release";
+if (-e $release) {
+    open DATA, $release;
+    my @array_of_data = <DATA>;
+    if ($_ =~ m/release 8/i) {
+        $distro = "rhel8";
+    }
+    close DATA
+}
+
 chop($host = `uname -n`);
 
 if (-d "/etc/X11/fontpath.d") {
@@ -190,7 +200,7 @@ $cmd .= " -auth $xauthorityFile";
 $cmd .= " -geometry $geometry" if ($geometry);
 $cmd .= " -depth $depth" if ($depth);
 $cmd .= " -pixelformat $pixelformat" if ($pixelformat);
-$cmd .= " -rfbwait 30000";
+$cmd .= " -rfbwait 30000" if ($distro != "rhel8");
 $cmd .= " -rfbauth $opt{'-vncpasswd'}";
 $cmd .= " -rfbport $vncPort";
 $cmd .= " -fp $fontPath" if ($fontPath);
