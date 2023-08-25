@@ -32,10 +32,8 @@ trap 'kill $(jobs -p)' EXIT
 
 sleep 5
 while true; do
-  if [ -x /usr/bin/xwd -a -x /usr/bin/xwdtopnm -a -x /usr/bin/pnmtopng ]; then
-    /usr/bin/xwd -root -silent -display ":${display}" | \
-      /usr/bin/xwdtopnm | \
-      /usr/bin/pnmtopng > "${dir}"/session.png
+  if [ -x /usr/bin/import ]; then
+    /usr/bin/import -window root -display ":${display}" -silent "${dir}"/session.png
   fi
   sleep 60
 done
