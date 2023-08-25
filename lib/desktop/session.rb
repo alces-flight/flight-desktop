@@ -348,9 +348,7 @@ module Desktop
     end
 
     def start_grabber
-      if File.executable?('/usr/bin/xwd') &&
-        File.executable?('/usr/bin/xwdtopnm') &&
-        File.executable?('/usr/bin/pnmtopng')
+      if File.executable?('/usr/bin/import')
         pid = fork {
           log_file = File.join(
             dir,
