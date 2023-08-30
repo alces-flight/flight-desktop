@@ -16,7 +16,7 @@ protocol.
 Flight Desktop is available as part of the *Flight User Suite*.  This is the
 easiest method for installing Flight Desktop and all its dependencies.  It is
 documented in [the OpenFlight
-Documentation](https://use.openflighthpc.org/installing-user-suite/install.html#installing-flight-user-suite).
+Documentation](https://docs.openflighthpc.org/2023.5/flight-environment/use-flight/flight-user-suite/flight-desktop/).
 
 ### Manual Installation
 
@@ -94,7 +94,7 @@ If Flight Desktop was installed via the OpenFlight package repos, you can read
 more detailed usage instructions by running `flight howto show flight
 desktop`.  Further information and examples of the `desktop` command are
 available in [the OpenFlight
-documentation](https://use.openflighthpc.org/en/latest/working-with-user-suite/flight-desktop.html).
+documentation](https://docs.openflighthpc.org/2023.5/flight-environment/use-flight/flight-user-suite/flight-desktop/).
 
 # Contributing
 
