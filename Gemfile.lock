@@ -15,11 +15,13 @@ GIT
 GEM
   remote: https://rubygems.org/
   specs:
+    bcrypt_pbkdf (1.1.0)
     commander-openflighthpc (2.2.0)
       highline (> 1.7.2)
       paint (~> 2.1.0)
       slop (~> 4.8)
     diff-lcs (1.5.0)
+    ed25519 (1.3.0)
     equatable (0.6.1)
     fakefs (1.5.1)
     ffi (1.11.1)
@@ -84,7 +86,9 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  bcrypt_pbkdf
   commander-openflighthpc (~> 2.2.0)
+  ed25519
   fakefs
   flight_configuration!
   ronn

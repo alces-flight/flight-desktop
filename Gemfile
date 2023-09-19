@@ -9,6 +9,8 @@ gem 'xdg', git: 'https://github.com/bkuhlmann/xdg', tag: '3.0.2'
 gem 'flight_configuration', github: 'openflighthpc/flight_configuration', tag: '0.4.1'
 gem 'ronn'
 gem 'whirly'
+gem 'ed25519'
+gem 'bcrypt_pbkdf'
 gem 'sys-proctable'
 
 group :test do
