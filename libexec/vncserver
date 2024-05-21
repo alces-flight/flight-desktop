@@ -205,6 +205,7 @@ $cmd .= " -rfbauth $opt{'-vncpasswd'}";
 $cmd .= " -rfbport $vncPort";
 $cmd .= " -fp $fontPath" if ($fontPath);
 $cmd .= " -pn";
+$cmd .= " -listen TCP";
 
 foreach $arg (@ARGV) {
     $cmd .= " " . &quotedString($arg);
