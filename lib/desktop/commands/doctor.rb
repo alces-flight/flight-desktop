@@ -41,9 +41,7 @@ module Desktop
 
       OPTIONAL_PROGS = {
         'Screen capture handling' => {
-          'X window capture' => '/usr/bin/xwd',
-          'Image converter (stage 1)' => '/usr/bin/xwdtopnm',
-          'Image converter (stage 2)' => '/usr/bin/pnmtopng',
+          'X window capture' => '/usr/bin/import',
         },
         'Networking' => {
           'Websocket provider' => Config.websockify_paths,
