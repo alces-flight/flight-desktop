@@ -137,13 +137,14 @@ module Desktop
             section_success = true
             h.each do |k,v|
               sr = SearchResult.new(v).run
-              puts "   > #{sr.success ? "\u2705" : "\u274c"} #{k} (#{sr.formatted_paths})"
+              section_output << "\n      > #{sr.success ? "\u2705" : "\u274c"} #{k} (#{sr.formatted_paths})"
               section_success &&= sr.success
             end
             if !section_success
               section_summary << " * #{Paint["OPTIONAL",:bright,:yellow]} - #{s} dependencies are not satisfied."
             end
-            puts "\n   > #{section_success ? "\u2705" : "\u274c"} #{s}\n#{section_output}"
+            puts "\n   > #{section_success ? "\u2705" : "\u274c"} #{s}"
+            puts "#{section_output}"
           end
           puts "\n== #{Paint["Summary",:bright]} ==\n\n"
           if section_summary.empty? && critical_success
